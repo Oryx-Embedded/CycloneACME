@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 1.9.8
+ * @version 2.0.0
  **/
 
 //Switch to the appropriate trace level
@@ -351,7 +351,7 @@ error_t acmeClientGenerateKeyAuthorization(AcmeClientContext *context,
    //A key authorization is a string that concatenates the token for the
    //challenge with a key fingerprint, separated by a "." character
    osStrcpy(p, challenge->token);
-   strcat(p, ".");
+   osStrcat(p, ".");
 
    //Point to the buffer where to format the JWK thumbprint
    p += osStrlen(challenge->token) + 1;
