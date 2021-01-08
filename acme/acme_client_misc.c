@@ -6,7 +6,7 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  *
- * Copyright (C) 2019-2020 Oryx Embedded SARL. All rights reserved.
+ * Copyright (C) 2019-2021 Oryx Embedded SARL. All rights reserved.
  *
  * This file is part of CycloneACME Open.
  *
@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.0.0
+ * @version 2.0.2
  **/
 
 //Switch to the appropriate trace level
@@ -573,7 +573,7 @@ error_t acmeClientFormatRequestHeader(AcmeClientContext *context,
 
    //A client must send a Host header field in all HTTP/1.1 requests (refer
    //to RFC 7230, section 5.4)
-   if(context->serverPort == HTTP_PORT || context->serverPort == HTTPS_PORT)
+   if(context->serverPort == HTTPS_PORT)
    {
       //A host without any trailing port information implies the default port
       //for the service requested
@@ -1176,16 +1176,16 @@ const char_t *acmeClientGetPath(const char_t *url)
    static const char_t defaultPath[] = "/";
 
    //The scheme is followed by a colon and two forward slashes
-   p = strstr(url, "://");
+   p = osStrstr(url, "://");
 
    //The path name begins with a single forward slash
    if(p != NULL)
    {
-      p = strchr(p + 3, '/');
+      p = osStrchr(p + 3, '/');
    }
    else
    {
-      p = strchr(url, '/');
+      p = osStrchr(url, '/');
    }
 
    //A path is always defined for a URI, though the defined path may be empty

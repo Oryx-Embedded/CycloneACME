@@ -6,7 +6,7 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  *
- * Copyright (C) 2019-2020 Oryx Embedded SARL. All rights reserved.
+ * Copyright (C) 2019-2021 Oryx Embedded SARL. All rights reserved.
  *
  * This file is part of CycloneACME Open.
  *
@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.0.0
+ * @version 2.0.2
  **/
 
 //Switch to the appropriate trace level
@@ -49,14 +49,31 @@
 
 error_t acmeDnsClientFormatRegisterRequest(AcmeDnsClientContext *context)
 {
+   bool_t defaultPort;
+
    //Create an HTTP request
    httpClientCreateRequest(&context->httpClientContext);
    httpClientSetMethod(&context->httpClientContext, "POST");
    httpClientSetUri(&context->httpClientContext, "/register");
 
+#if (ACME_DNS_CLIENT_TLS_SUPPORT == ENABLED)
+   //"https" URI scheme?
+   if(context->tlsInitCallback != NULL)
+   {
+      //The default port number is 443 for "https" URI scheme
+      defaultPort = (context->serverPort == HTTPS_PORT) ? TRUE : FALSE;
+   }
+   else
+#endif
+   //"http" URI scheme?
+   {
+      //The default port number is 80 for "http" URI scheme
+      defaultPort = (context->serverPort == HTTP_PORT) ? TRUE : FALSE;
+   }
+
    //A client must send a Host header field in all HTTP/1.1 requests (refer
    //to RFC 7230, section 5.4)
-   if(context->serverPort == HTTP_PORT || context->serverPort == HTTPS_PORT)
+   if(defaultPort)
    {
       //A host without any trailing port information implies the default port
       //for the service requested
@@ -182,6 +199,8 @@ error_t acmeDnsClientParseRegisterResponse(AcmeDnsClientContext *context)
 error_t acmeDnsClientFormatUpdateRequest(AcmeDnsClientContext *context,
    const char_t *txt)
 {
+   bool_t defaultPort;
+
    //Check the length of the TXT record
    if(osStrlen(txt) != ACME_DNS_TXT_RECORD_LEN)
       return ERROR_INVALID_LENGTH;
@@ -191,9 +210,24 @@ error_t acmeDnsClientFormatUpdateRequest(AcmeDnsClientContext *context,
    httpClientSetMethod(&context->httpClientContext, "POST");
    httpClientSetUri(&context->httpClientContext, "/update");
 
+#if (ACME_DNS_CLIENT_TLS_SUPPORT == ENABLED)
+   //"https" URI scheme?
+   if(context->tlsInitCallback != NULL)
+   {
+      //The default port number is 443 for "https" URI scheme
+      defaultPort = (context->serverPort == HTTPS_PORT) ? TRUE : FALSE;
+   }
+   else
+#endif
+   //"http" URI scheme?
+   {
+      //The default port number is 80 for "http" URI scheme
+      defaultPort = (context->serverPort == HTTP_PORT) ? TRUE : FALSE;
+   }
+
    //A client must send a Host header field in all HTTP/1.1 requests (refer
    //to RFC 7230, section 5.4)
-   if(context->serverPort == HTTP_PORT || context->serverPort == HTTPS_PORT)
+   if(defaultPort)
    {
       //A host without any trailing port information implies the default port
       //for the service requested
