@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.0.2
+ * @version 2.0.4
  **/
 
 #ifndef _ACME_CLIENT_H
@@ -66,13 +66,13 @@
 #endif
 
 //Version string
-#define CYCLONE_ACME_VERSION_STRING "2.0.2"
+#define CYCLONE_ACME_VERSION_STRING "2.0.4"
 //Major version
 #define CYCLONE_ACME_MAJOR_VERSION 2
 //Minor version
 #define CYCLONE_ACME_MINOR_VERSION 0
 //Revision number
-#define CYCLONE_ACME_REV_NUMBER 2
+#define CYCLONE_ACME_REV_NUMBER 4
 
 //ACME client support
 #ifndef ACME_CLIENT_SUPPORT
@@ -156,7 +156,7 @@
 
 //Size of the buffer for input/output operations
 #ifndef ACME_CLIENT_BUFFER_SIZE
-   #define ACME_CLIENT_BUFFER_SIZE 4096
+   #define ACME_CLIENT_BUFFER_SIZE 6144
 #elif (ACME_CLIENT_BUFFER_SIZE < 2048)
    #error ACME_CLIENT_BUFFER_SIZE parameter is not valid
 #endif
