@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.0.4
+ * @version 2.1.0
  **/
 
 #ifndef _ACME_DNS_CLIENT_H
@@ -103,7 +103,7 @@
 #define ACME_DNS_TXT_RECORD_LEN 43
 
 //TLS supported?
-#if (FTP_CLIENT_TLS_SUPPORT == ENABLED)
+#if (ACME_DNS_CLIENT_TLS_SUPPORT == ENABLED)
    #include "core/crypto.h"
    #include "tls.h"
 #endif

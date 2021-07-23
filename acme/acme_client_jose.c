@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.0.4
+ * @version 2.1.0
  **/
 
 //Switch to the appropriate trace level
@@ -35,8 +35,6 @@
 #include "acme/acme_client.h"
 #include "acme/acme_client_jose.h"
 #include "encoding/base64url.h"
-#include "ecc/ed25519.h"
-#include "ecc/ed448.h"
 #include "jansson.h"
 #include "jansson_private.h"
 #include "debug.h"
@@ -360,12 +358,12 @@ error_t jwkExportEddsaPublicKey(const char_t *crv,
       if(!osStrcmp(crv, "Ed25519"))
       {
          //The public key consists of 32 octets
-         n = ED25519_PUBLIC_KEY_LEN;
+         n = 32;
       }
       else if(!osStrcmp(crv, "Ed448"))
       {
          //The public key consists of 57 octets
-         n = ED448_PUBLIC_KEY_LEN;
+         n = 57;
       }
       else
       {
