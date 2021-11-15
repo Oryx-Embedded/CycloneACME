@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.1.0
+ * @version 2.1.2
  **/
 
 //Switch to the appropriate trace level
@@ -169,7 +169,7 @@ error_t jwkExportRsaPublicKey(const RsaPublicKey *publicKey, char_t *buffer,
  **/
 
 error_t jwkExportEcPublicKey(const EcDomainParameters *params,
-   const EcPoint *publicKey, char_t *buffer, size_t *written, bool_t sort)
+   const EcPublicKey *publicKey, char_t *buffer, size_t *written, bool_t sort)
 {
    error_t error;
    int_t ret;
@@ -235,7 +235,7 @@ error_t jwkExportEcPublicKey(const EcDomainParameters *params,
       n = mpiGetByteLength(&params->p);
 
       //Convert the x-coordinate to an octet string
-      error = mpiExport(&publicKey->x, (uint8_t *) buffer, n,
+      error = mpiExport(&publicKey->q.x, (uint8_t *) buffer, n,
          MPI_FORMAT_BIG_ENDIAN);
       //Any error to report?
       if(error)
@@ -257,7 +257,7 @@ error_t jwkExportEcPublicKey(const EcDomainParameters *params,
       n = mpiGetByteLength(&params->p);
 
       //Convert the y-coordinate to an octet string
-      error = mpiExport(&publicKey->y, (uint8_t *) buffer, n,
+      error = mpiExport(&publicKey->q.y, (uint8_t *) buffer, n,
          MPI_FORMAT_BIG_ENDIAN);
       //Any error to report?
       if(error)

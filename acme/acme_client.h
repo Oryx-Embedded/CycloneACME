@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.1.0
+ * @version 2.1.2
  **/
 
 #ifndef _ACME_CLIENT_H
@@ -66,13 +66,13 @@
 #endif
 
 //Version string
-#define CYCLONE_ACME_VERSION_STRING "2.1.0"
+#define CYCLONE_ACME_VERSION_STRING "2.1.2"
 //Major version
 #define CYCLONE_ACME_MAJOR_VERSION 2
 //Minor version
 #define CYCLONE_ACME_MINOR_VERSION 1
 //Revision number
-#define CYCLONE_ACME_REV_NUMBER 0
+#define CYCLONE_ACME_REV_NUMBER 2
 
 //ACME client support
 #ifndef ACME_CLIENT_SUPPORT
@@ -410,8 +410,8 @@ typedef struct
 #endif
 #if (ACME_CLIENT_ECDSA_SUPPORT == ENABLED)
    EcDomainParameters ecParams;
-   EcPoint ecPublicKey;
-   Mpi ecPrivateKey;
+   EcPublicKey ecPublicKey;
+   EcPrivateKey ecPrivateKey;
 #endif
 #if (ACME_CLIENT_ED25519_SUPPORT == ENABLED || \
    ACME_CLIENT_ED448_SUPPORT == ENABLED)

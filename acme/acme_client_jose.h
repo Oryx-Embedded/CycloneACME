@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.1.0
+ * @version 2.1.2
  **/
 
 #ifndef _ACME_CLIENT_JOSE_H
@@ -44,7 +44,7 @@ error_t jwkExportRsaPublicKey(const RsaPublicKey *publicKey, char_t *buffer,
    size_t *written, bool_t sort);
 
 error_t jwkExportEcPublicKey(const EcDomainParameters *params,
-   const EcPoint *publicKey, char_t *buffer, size_t *written, bool_t sort);
+   const EcPublicKey *publicKey, char_t *buffer, size_t *written, bool_t sort);
 
 error_t jwkExportEddsaPublicKey(const char_t *crv,
    const EddsaPublicKey *publicKey, char_t *buffer, size_t *written,

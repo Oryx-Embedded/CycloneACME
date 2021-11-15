@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.1.0
+ * @version 2.1.2
  **/
 
 //Switch to the appropriate trace level
@@ -126,8 +126,8 @@ error_t acmeClientLoadKeyPair(AcmeKeyPair *keyPair, const char_t *publicKey,
          ecInitDomainParameters(&keyPair->ecParams);
 
          //Initialize EC public and private keys
-         ecInit(&keyPair->ecPublicKey);
-         mpiInit(&keyPair->ecPrivateKey);
+         ecInitPublicKey(&keyPair->ecPublicKey);
+         ecInitPrivateKey(&keyPair->ecPrivateKey);
 
          //Decode the PEM file that contains the EC domain parameters
          error = pemImportEcParameters(publicKey, publicKeyLen,
@@ -308,8 +308,8 @@ void acmeClientUnloadKeyPair(AcmeKeyPair *keyPair)
       ecFreeDomainParameters(&keyPair->ecParams);
 
       //Release EC public and private keys
-      ecFree(&keyPair->ecPublicKey);
-      mpiFree(&keyPair->ecPrivateKey);
+      ecFreePublicKey(&keyPair->ecPublicKey);
+      ecFreePrivateKey(&keyPair->ecPrivateKey);
    }
    else
 #endif
