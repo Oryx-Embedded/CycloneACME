@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.1.8
+ * @version 2.2.0
  **/
 
 #ifndef _ACME_CLIENT_H
@@ -66,13 +66,13 @@
 #endif
 
 //Version string
-#define CYCLONE_ACME_VERSION_STRING "2.1.8"
+#define CYCLONE_ACME_VERSION_STRING "2.2.0"
 //Major version
 #define CYCLONE_ACME_MAJOR_VERSION 2
 //Minor version
-#define CYCLONE_ACME_MINOR_VERSION 1
+#define CYCLONE_ACME_MINOR_VERSION 2
 //Revision number
-#define CYCLONE_ACME_REV_NUMBER 8
+#define CYCLONE_ACME_REV_NUMBER 0
 
 //ACME client support
 #ifndef ACME_CLIENT_SUPPORT
