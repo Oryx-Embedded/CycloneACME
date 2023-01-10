@@ -6,7 +6,7 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  *
- * Copyright (C) 2019-2022 Oryx Embedded SARL. All rights reserved.
+ * Copyright (C) 2019-2023 Oryx Embedded SARL. All rights reserved.
  *
  * This file is part of CycloneACME Open.
  *
@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.2.0
+ * @version 2.2.2
  **/
 
 //Switch to the appropriate trace level
@@ -97,7 +97,7 @@ error_t acmeClientLoadKeyPair(AcmeKeyPair *keyPair, const char_t *publicKey,
          {
             //Decode the PEM file that contains the RSA private key
             error = pemImportRsaPrivateKey(privateKey, privateKeyLen,
-               &keyPair->rsaPrivateKey);
+               NULL, &keyPair->rsaPrivateKey);
          }
 
          //Check status code
@@ -146,7 +146,7 @@ error_t acmeClientLoadKeyPair(AcmeKeyPair *keyPair, const char_t *publicKey,
          {
             //Decode the PEM file that contains the EC private key
             error = pemImportEcPrivateKey(privateKey, privateKeyLen,
-               &keyPair->ecPrivateKey);
+               NULL, &keyPair->ecPrivateKey);
          }
 
          //Check status code
@@ -205,7 +205,7 @@ error_t acmeClientLoadKeyPair(AcmeKeyPair *keyPair, const char_t *publicKey,
          {
             //Decode the PEM file that contains the EdDSA private key
             error = pemImportEddsaPrivateKey(privateKey, privateKeyLen,
-               &keyPair->eddsaPrivateKey);
+               NULL, &keyPair->eddsaPrivateKey);
          }
 
          //Check status code
@@ -247,7 +247,7 @@ error_t acmeClientLoadKeyPair(AcmeKeyPair *keyPair, const char_t *publicKey,
          {
             //Decode the PEM file that contains the EdDSA private key
             error = pemImportEddsaPrivateKey(privateKey, privateKeyLen,
-               &keyPair->eddsaPrivateKey);
+               NULL, &keyPair->eddsaPrivateKey);
          }
 
          //Check status code
