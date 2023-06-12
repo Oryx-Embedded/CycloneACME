@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.2.4
+ * @version 2.3.0
  **/
 
 //Switch to the appropriate trace level
@@ -432,7 +432,7 @@ error_t acmeClientGenerateTlsAlpnCert(AcmeClientContext *context,
    X509CertRequestInfo *certReqInfo;
    X509Extensions *extensions;
    X509Validity validity;
-   X509SignatureAlgoId signatureAlgo;
+   X509SignAlgoId signatureAlgo;
    uint8_t digest[SHA256_DIGEST_SIZE + 2];
 
    //Allocate a memory buffer to hold the certificate request information
@@ -447,8 +447,8 @@ error_t acmeClientGenerateTlsAlpnCert(AcmeClientContext *context,
       //The client prepares for validation by constructing a self-signed
       //certificate that must contain an acmeIdentifier extension and a
       //subjectAlternativeName extension
-      certReqInfo->subject.commonName = challenge->identifier;
-      certReqInfo->subject.commonNameLen = osStrlen(challenge->identifier);
+      certReqInfo->subject.commonName.value = challenge->identifier;
+      certReqInfo->subject.commonName.length = osStrlen(challenge->identifier);
 
       //Point to the certificate extensions
       extensions = &certReqInfo->attributes.extensionReq;
@@ -480,23 +480,23 @@ error_t acmeClientGenerateTlsAlpnCert(AcmeClientContext *context,
          //The acmeIdentifier extension must be critical so that the certificate
          //cannot be inadvertently used by non-ACME software
          extensions->numCustomExtensions = 1;
-         extensions->customExtensions[0].oid = ACME_IDENTIFIER_OID;
-         extensions->customExtensions[0].oidLen = sizeof(ACME_IDENTIFIER_OID);
+         extensions->customExtensions[0].oid.value = ACME_IDENTIFIER_OID;
+         extensions->customExtensions[0].oid.length = sizeof(ACME_IDENTIFIER_OID);
          extensions->customExtensions[0].critical = TRUE;
-         extensions->customExtensions[0].value = digest;
-         extensions->customExtensions[0].valueLen = sizeof(digest);
+         extensions->customExtensions[0].data.value = digest;
+         extensions->customExtensions[0].data.length = sizeof(digest);
 
 #if (ACME_CLIENT_RSA_SUPPORT == ENABLED)
          //RSA key pair?
          if(context->certKey.type == X509_KEY_TYPE_RSA)
          {
             //Set public key identifier
-            certReqInfo->subjectPublicKeyInfo.oid = RSA_ENCRYPTION_OID;
-            certReqInfo->subjectPublicKeyInfo.oidLen = sizeof(RSA_ENCRYPTION_OID);
+            certReqInfo->subjectPublicKeyInfo.oid.value = RSA_ENCRYPTION_OID;
+            certReqInfo->subjectPublicKeyInfo.oid.length = sizeof(RSA_ENCRYPTION_OID);
 
             //Select the signature algorithm
-            signatureAlgo.oid = SHA256_WITH_RSA_ENCRYPTION_OID;
-            signatureAlgo.oidLen = sizeof(SHA256_WITH_RSA_ENCRYPTION_OID);
+            signatureAlgo.oid.value = SHA256_WITH_RSA_ENCRYPTION_OID;
+            signatureAlgo.oid.length = sizeof(SHA256_WITH_RSA_ENCRYPTION_OID);
          }
          else
 #endif
@@ -507,8 +507,8 @@ error_t acmeClientGenerateTlsAlpnCert(AcmeClientContext *context,
             X509EcParameters *ecParams;
 
             //Set public key identifier
-            certReqInfo->subjectPublicKeyInfo.oid = EC_PUBLIC_KEY_OID;
-            certReqInfo->subjectPublicKeyInfo.oidLen = sizeof(EC_PUBLIC_KEY_OID);
+            certReqInfo->subjectPublicKeyInfo.oid.value = EC_PUBLIC_KEY_OID;
+            certReqInfo->subjectPublicKeyInfo.oid.length = sizeof(EC_PUBLIC_KEY_OID);
 
             //Point to the EC domain parameters
             ecParams = &certReqInfo->subjectPublicKeyInfo.ecParams;
@@ -516,18 +516,18 @@ error_t acmeClientGenerateTlsAlpnCert(AcmeClientContext *context,
             //Select the relevant elliptic curve
             if(!osStrcmp(context->certKey.ecParams.name, "secp256r1"))
             {
-               ecParams->namedCurve = SECP256R1_OID;
-               ecParams->namedCurveLen = sizeof(SECP256R1_OID);
+               ecParams->namedCurve.value = SECP256R1_OID;
+               ecParams->namedCurve.length = sizeof(SECP256R1_OID);
             }
             else if(!osStrcmp(context->certKey.ecParams.name, "secp384r1"))
             {
-               ecParams->namedCurve = SECP384R1_OID;
-               ecParams->namedCurveLen = sizeof(SECP384R1_OID);
+               ecParams->namedCurve.value = SECP384R1_OID;
+               ecParams->namedCurve.length = sizeof(SECP384R1_OID);
             }
             else if(!osStrcmp(context->certKey.ecParams.name, "secp521r1"))
             {
-               ecParams->namedCurve = SECP521R1_OID;
-               ecParams->namedCurveLen = sizeof(SECP521R1_OID);
+               ecParams->namedCurve.value = SECP521R1_OID;
+               ecParams->namedCurve.length = sizeof(SECP521R1_OID);
             }
             else
             {
@@ -536,8 +536,8 @@ error_t acmeClientGenerateTlsAlpnCert(AcmeClientContext *context,
             }
 
             //Select the signature algorithm
-            signatureAlgo.oid = ECDSA_WITH_SHA256_OID;
-            signatureAlgo.oidLen = sizeof(ECDSA_WITH_SHA256_OID);
+            signatureAlgo.oid.value = ECDSA_WITH_SHA256_OID;
+            signatureAlgo.oid.length = sizeof(ECDSA_WITH_SHA256_OID);
          }
          else
 #endif
@@ -546,12 +546,12 @@ error_t acmeClientGenerateTlsAlpnCert(AcmeClientContext *context,
          if(context->certKey.type == X509_KEY_TYPE_ED25519)
          {
             //Set public key identifier
-            certReqInfo->subjectPublicKeyInfo.oid = ED25519_OID;
-            certReqInfo->subjectPublicKeyInfo.oidLen = sizeof(ED25519_OID);
+            certReqInfo->subjectPublicKeyInfo.oid.value = ED25519_OID;
+            certReqInfo->subjectPublicKeyInfo.oid.length = sizeof(ED25519_OID);
 
             //Select the signature algorithm
-            signatureAlgo.oid = ED25519_OID;
-            signatureAlgo.oidLen = sizeof(ED25519_OID);
+            signatureAlgo.oid.value = ED25519_OID;
+            signatureAlgo.oid.length = sizeof(ED25519_OID);
          }
          else
 #endif
@@ -560,12 +560,12 @@ error_t acmeClientGenerateTlsAlpnCert(AcmeClientContext *context,
          if(context->certKey.type == X509_KEY_TYPE_ED448)
          {
             //Set public key identifier
-            certReqInfo->subjectPublicKeyInfo.oid = ED448_OID;
-            certReqInfo->subjectPublicKeyInfo.oidLen = sizeof(ED448_OID);
+            certReqInfo->subjectPublicKeyInfo.oid.value = ED448_OID;
+            certReqInfo->subjectPublicKeyInfo.oid.length = sizeof(ED448_OID);
 
             //Select the signature algorithm
-            signatureAlgo.oid = ED448_OID;
-            signatureAlgo.oidLen = sizeof(ED448_OID);
+            signatureAlgo.oid.value = ED448_OID;
+            signatureAlgo.oid.length = sizeof(ED448_OID);
          }
          else
 #endif

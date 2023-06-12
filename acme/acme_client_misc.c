@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.2.4
+ * @version 2.3.0
  **/
 
 //Switch to the appropriate trace level
@@ -832,7 +832,7 @@ error_t acmeClientGenerateCsr(AcmeClientContext *context, uint8_t *buffer,
    uint_t i;
    X509CertRequestInfo *certReqInfo;
    X509SubjectAltName *subjectAltName;
-   X509SignatureAlgoId signatureAlgo;
+   X509SignAlgoId signatureAlgo;
 
    //Initialize status code
    error = NO_ERROR;
@@ -848,8 +848,8 @@ error_t acmeClientGenerateCsr(AcmeClientContext *context, uint8_t *buffer,
 
       //The CSR must indicate the exact same set of requested identifiers as the
       //initial newOrder request (refer to RFC 8555, section 7.4)
-      certReqInfo->subject.commonName = context->identifiers[0].value;
-      certReqInfo->subject.commonNameLen = osStrlen(context->identifiers[0].value);
+      certReqInfo->subject.commonName.value = context->identifiers[0].value;
+      certReqInfo->subject.commonName.length = osStrlen(context->identifiers[0].value);
 
       //The Subject Alternative Name extension allows identities to be bound
       //to the subject of the certificate.  These identities may be included
@@ -874,12 +874,12 @@ error_t acmeClientGenerateCsr(AcmeClientContext *context, uint8_t *buffer,
       if(context->certKey.type == X509_KEY_TYPE_RSA)
       {
          //Set public key identifier
-         certReqInfo->subjectPublicKeyInfo.oid = RSA_ENCRYPTION_OID;
-         certReqInfo->subjectPublicKeyInfo.oidLen = sizeof(RSA_ENCRYPTION_OID);
+         certReqInfo->subjectPublicKeyInfo.oid.value = RSA_ENCRYPTION_OID;
+         certReqInfo->subjectPublicKeyInfo.oid.length = sizeof(RSA_ENCRYPTION_OID);
 
          //Select the signature algorithm
-         signatureAlgo.oid = SHA256_WITH_RSA_ENCRYPTION_OID;
-         signatureAlgo.oidLen = sizeof(SHA256_WITH_RSA_ENCRYPTION_OID);
+         signatureAlgo.oid.value = SHA256_WITH_RSA_ENCRYPTION_OID;
+         signatureAlgo.oid.length = sizeof(SHA256_WITH_RSA_ENCRYPTION_OID);
       }
       else
 #endif
@@ -890,8 +890,8 @@ error_t acmeClientGenerateCsr(AcmeClientContext *context, uint8_t *buffer,
          X509EcParameters *ecParams;
 
          //Set public key identifier
-         certReqInfo->subjectPublicKeyInfo.oid = EC_PUBLIC_KEY_OID;
-         certReqInfo->subjectPublicKeyInfo.oidLen = sizeof(EC_PUBLIC_KEY_OID);
+         certReqInfo->subjectPublicKeyInfo.oid.value = EC_PUBLIC_KEY_OID;
+         certReqInfo->subjectPublicKeyInfo.oid.length = sizeof(EC_PUBLIC_KEY_OID);
 
          //Point to the EC domain parameters
          ecParams = &certReqInfo->subjectPublicKeyInfo.ecParams;
@@ -899,18 +899,18 @@ error_t acmeClientGenerateCsr(AcmeClientContext *context, uint8_t *buffer,
          //Select the relevant elliptic curve
          if(!osStrcmp(context->certKey.ecParams.name, "secp256r1"))
          {
-            ecParams->namedCurve = SECP256R1_OID;
-            ecParams->namedCurveLen = sizeof(SECP256R1_OID);
+            ecParams->namedCurve.value = SECP256R1_OID;
+            ecParams->namedCurve.length = sizeof(SECP256R1_OID);
          }
          else if(!osStrcmp(context->certKey.ecParams.name, "secp384r1"))
          {
-            ecParams->namedCurve = SECP384R1_OID;
-            ecParams->namedCurveLen = sizeof(SECP384R1_OID);
+            ecParams->namedCurve.value = SECP384R1_OID;
+            ecParams->namedCurve.length = sizeof(SECP384R1_OID);
          }
          else if(!osStrcmp(context->certKey.ecParams.name, "secp521r1"))
          {
-            ecParams->namedCurve = SECP521R1_OID;
-            ecParams->namedCurveLen = sizeof(SECP521R1_OID);
+            ecParams->namedCurve.value = SECP521R1_OID;
+            ecParams->namedCurve.length = sizeof(SECP521R1_OID);
          }
          else
          {
@@ -919,8 +919,8 @@ error_t acmeClientGenerateCsr(AcmeClientContext *context, uint8_t *buffer,
          }
 
          //Select the signature algorithm
-         signatureAlgo.oid = ECDSA_WITH_SHA256_OID;
-         signatureAlgo.oidLen = sizeof(ECDSA_WITH_SHA256_OID);
+         signatureAlgo.oid.value = ECDSA_WITH_SHA256_OID;
+         signatureAlgo.oid.length = sizeof(ECDSA_WITH_SHA256_OID);
       }
       else
 #endif
@@ -929,12 +929,12 @@ error_t acmeClientGenerateCsr(AcmeClientContext *context, uint8_t *buffer,
       if(context->certKey.type == X509_KEY_TYPE_ED25519)
       {
          //Set public key identifier
-         certReqInfo->subjectPublicKeyInfo.oid = ED25519_OID;
-         certReqInfo->subjectPublicKeyInfo.oidLen = sizeof(ED25519_OID);
+         certReqInfo->subjectPublicKeyInfo.oid.value = ED25519_OID;
+         certReqInfo->subjectPublicKeyInfo.oid.length = sizeof(ED25519_OID);
 
          //Select the signature algorithm
-         signatureAlgo.oid = ED25519_OID;
-         signatureAlgo.oidLen = sizeof(ED25519_OID);
+         signatureAlgo.oid.value = ED25519_OID;
+         signatureAlgo.oid.length = sizeof(ED25519_OID);
       }
       else
 #endif
@@ -943,12 +943,12 @@ error_t acmeClientGenerateCsr(AcmeClientContext *context, uint8_t *buffer,
       if(context->certKey.type == X509_KEY_TYPE_ED448)
       {
          //Set public key identifier
-         certReqInfo->subjectPublicKeyInfo.oid = ED448_OID;
-         certReqInfo->subjectPublicKeyInfo.oidLen = sizeof(ED448_OID);
+         certReqInfo->subjectPublicKeyInfo.oid.value = ED448_OID;
+         certReqInfo->subjectPublicKeyInfo.oid.length = sizeof(ED448_OID);
 
          //Select the signature algorithm
-         signatureAlgo.oid = ED448_OID;
-         signatureAlgo.oidLen = sizeof(ED448_OID);
+         signatureAlgo.oid.value = ED448_OID;
+         signatureAlgo.oid.length = sizeof(ED448_OID);
       }
       else
 #endif

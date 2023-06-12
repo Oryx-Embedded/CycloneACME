@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.2.4
+ * @version 2.3.0
  **/
 
 #ifndef _ACME_CLIENT_H
@@ -66,13 +66,13 @@
 #endif
 
 //Version string
-#define CYCLONE_ACME_VERSION_STRING "2.2.4"
+#define CYCLONE_ACME_VERSION_STRING "2.3.0"
 //Major version
 #define CYCLONE_ACME_MAJOR_VERSION 2
 //Minor version
-#define CYCLONE_ACME_MINOR_VERSION 2
+#define CYCLONE_ACME_MINOR_VERSION 3
 //Revision number
-#define CYCLONE_ACME_REV_NUMBER 4
+#define CYCLONE_ACME_REV_NUMBER 0
 
 //ACME client support
 #ifndef ACME_CLIENT_SUPPORT
@@ -229,6 +229,11 @@
    #define ACME_CLIENT_MAX_BAD_NONCE_ERRORS 5
 #elif (ACME_CLIENT_MAX_BAD_NONCE_ERRORS < 0)
    #error ACME_CLIENT_MAX_BAD_NONCE_ERRORS parameter is not valid
+#endif
+
+//Application specific context
+#ifndef ACME_CLIENT_PRIVATE_CONTEXT
+   #define ACME_CLIENT_PRIVATE_CONTEXT
 #endif
 
 //Forward declaration of AcmeClientContext structure
@@ -584,6 +589,7 @@ struct _AcmeClientContext
    char_t contentType[ACME_CLIENT_MAX_CONTENT_TYPE_LEN + 1];  ///<Content type of the response
    char_t errorType[ACME_CLIENT_MAX_URN_LEN + 1];             ///<ACME error type
    uint_t badNonceErrors;                                     ///<Number of consecutive bad nonce errors
+   ACME_CLIENT_PRIVATE_CONTEXT                                ///<Application specific context
 };
 
 

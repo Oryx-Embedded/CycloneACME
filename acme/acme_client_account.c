@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.2.4
+ * @version 2.3.0
  **/
 
 //Switch to the appropriate trace level
@@ -60,10 +60,6 @@ error_t acmeClientCheckAccountParams(const AcmeAccountParams *params)
 
    //Check the number of contacts
    if(params->numContacts > ACME_CLIENT_MAX_CONTACTS)
-      return ERROR_INVALID_PARAMETER;
-
-   //Make sure the list of contacts is valid
-   if(params->numContacts != 0 && params->contacts == NULL)
       return ERROR_INVALID_PARAMETER;
 
    //Loop through the list of contacts
@@ -222,7 +218,7 @@ error_t acmeClientFormatNewAccountRequest(AcmeClientContext *context,
    {
       //The "contact" field contains an array of URLs that the server can use
       //to contact the client for issues related to this account
-      if(params->contacts != NULL && params->numContacts > 0)
+      if(params->numContacts > 0)
       {
          //Initialize JSON object
          contactObj = json_array();
@@ -452,7 +448,7 @@ error_t acmeFormatUpdateAccountRequest(AcmeClientContext *context,
 
    //The "contact" field contains an array of URLs that the server can use
    //to contact the client for issues related to this account
-   if(params->contacts != NULL && params->numContacts > 0)
+   if(params->numContacts > 0)
    {
       //Initialize JSON object
       contactObj = json_array();
