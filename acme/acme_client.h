@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.3.2
+ * @version 2.3.4
  **/
 
 #ifndef _ACME_CLIENT_H
@@ -66,13 +66,13 @@
 #endif
 
 //Version string
-#define CYCLONE_ACME_VERSION_STRING "2.3.2"
+#define CYCLONE_ACME_VERSION_STRING "2.3.4"
 //Major version
 #define CYCLONE_ACME_MAJOR_VERSION 2
 //Minor version
 #define CYCLONE_ACME_MINOR_VERSION 3
 //Revision number
-#define CYCLONE_ACME_REV_NUMBER 2
+#define CYCLONE_ACME_REV_NUMBER 4
 
 //ACME client support
 #ifndef ACME_CLIENT_SUPPORT
@@ -117,6 +117,13 @@
    #define ACME_CLIENT_ECDSA_SUPPORT ENABLED
 #elif (ACME_CLIENT_ECDSA_SUPPORT != ENABLED && ACME_CLIENT_ECDSA_SUPPORT != DISABLED)
    #error ACME_CLIENT_ECDSA_SUPPORT parameter is not valid
+#endif
+
+//SM2 key support
+#ifndef ACME_CLIENT_SM2_SUPPORT
+   #define ACME_CLIENT_SM2_SUPPORT DISABLED
+#elif (ACME_CLIENT_SM2_SUPPORT != ENABLED && ACME_CLIENT_SM2_SUPPORT != DISABLED)
+   #error ACME_CLIENT_SM2_SUPPORT parameter is not valid
 #endif
 
 //Ed25519 key support
