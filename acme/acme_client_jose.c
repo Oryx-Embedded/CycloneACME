@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.4.2
+ * @version 2.4.4
  **/
 
 //Switch to the appropriate trace level
@@ -201,17 +201,17 @@ error_t jwkExportEcPublicKey(const EcDomainParameters *params,
 
       //The "crv" (curve) parameter identifies the cryptographic curve used
       //with the key (refer to RFC 7518, section 6.2.1.1)
-      if(!osStrcmp(params->name, "secp256r1"))
+      if(osStrcmp(params->name, "secp256r1") == 0)
       {
          //Select NIST P-256 elliptic curve
          crv = "P-256";
       }
-      else if(!osStrcmp(params->name, "secp384r1"))
+      else if(osStrcmp(params->name, "secp384r1") == 0)
       {
          //Select NIST P-384 elliptic curve
          crv = "P-384";
       }
-      else if(!osStrcmp(params->name, "secp521r1"))
+      else if(osStrcmp(params->name, "secp521r1") == 0)
       {
          //Select NIST P-521 elliptic curve
          crv = "P-521";
@@ -355,12 +355,12 @@ error_t jwkExportEddsaPublicKey(const char_t *crv,
          break;
 
       //Retrieve the length of the public key
-      if(!osStrcmp(crv, "Ed25519"))
+      if(osStrcmp(crv, "Ed25519") == 0)
       {
          //The public key consists of 32 octets
          n = 32;
       }
-      else if(!osStrcmp(crv, "Ed448"))
+      else if(osStrcmp(crv, "Ed448") == 0)
       {
          //The public key consists of 57 octets
          n = 57;
@@ -580,23 +580,24 @@ error_t jwsGenerateSignature(const PrngAlgo *prngAlgo, void *prngContext,
 
 #if (ACME_CLIENT_RSA_SUPPORT == ENABLED)
    //RSASSA-PKCS1-v1_5 algorithm?
-   if(!osStrcmp(alg, "RS256") || !osStrcmp(alg, "RS384") || !osStrcmp(alg, "RS512"))
+   if(osStrcmp(alg, "RS256") == 0 || osStrcmp(alg, "RS384") == 0 ||
+      osStrcmp(alg, "RS512") == 0)
    {
       const HashAlgo *hashAlgo;
       uint8_t digest[SHA512_DIGEST_SIZE];
 
       //Select the relevant signature algorithm
-      if(!osStrcmp(alg, "RS256"))
+      if(osStrcmp(alg, "RS256") == 0)
       {
          //RSASSA-PKCS1-v1_5 algorithm with SHA-256
          hashAlgo = SHA256_HASH_ALGO;
       }
-      else if(!osStrcmp(alg, "RS384"))
+      else if(osStrcmp(alg, "RS384") == 0)
       {
          //RSASSA-PKCS1-v1_5 algorithm with SHA-384
          hashAlgo = SHA384_HASH_ALGO;
       }
-      else if(!osStrcmp(alg, "RS512"))
+      else if(osStrcmp(alg, "RS512") == 0)
       {
          //RSASSA-PKCS1-v1_5 algorithm with SHA-512
          hashAlgo = SHA512_HASH_ALGO;
@@ -631,7 +632,8 @@ error_t jwsGenerateSignature(const PrngAlgo *prngAlgo, void *prngContext,
 #endif
 #if (ACME_CLIENT_ECDSA_SUPPORT == ENABLED)
    //ECDSA algorithm?
-   if(!osStrcmp(alg, "ES256") || !osStrcmp(alg, "ES384") || !osStrcmp(alg, "ES512"))
+   if(osStrcmp(alg, "ES256") == 0 || osStrcmp(alg, "ES384") == 0 ||
+      osStrcmp(alg, "ES512") == 0)
    {
       size_t n;
       const HashAlgo *hashAlgo;
@@ -646,19 +648,19 @@ error_t jwsGenerateSignature(const PrngAlgo *prngAlgo, void *prngContext,
       ecdsaInitSignature(&signature);
 
       //Select the relevant signature algorithm
-      if(!osStrcmp(alg, "ES256"))
+      if(osStrcmp(alg, "ES256") == 0)
       {
          //ECDSA algorithm using P-256 and SHA-256
          curveInfo = SECP256R1_CURVE;
          hashAlgo = SHA256_HASH_ALGO;
       }
-      else if(!osStrcmp(alg, "ES384"))
+      else if(osStrcmp(alg, "ES384") == 0)
       {
          //ECDSA algorithm using P-384 and SHA-384
          curveInfo = SECP384R1_CURVE;
          hashAlgo = SHA384_HASH_ALGO;
       }
-      else if(!osStrcmp(alg, "ES512"))
+      else if(osStrcmp(alg, "ES512") == 0)
       {
          //ECDSA algorithm using P-521 and SHA-512
          curveInfo = SECP521R1_CURVE;
@@ -736,7 +738,7 @@ error_t jwsGenerateSignature(const PrngAlgo *prngAlgo, void *prngContext,
 #endif
 #if (ACME_CLIENT_ED25519_SUPPORT == ENABLED)
    //Ed25519 algorithm?
-   if(!osStrcmp(alg, "EdDSA") && !osStrcmp(crv, "Ed25519"))
+   if(osStrcmp(alg, "EdDSA") == 0 && osStrcmp(crv, "Ed25519") == 0)
    {
       const EddsaPrivateKey *eddsaPrivateKey;
       uint8_t d[ED25519_PRIVATE_KEY_LEN];
@@ -763,7 +765,7 @@ error_t jwsGenerateSignature(const PrngAlgo *prngAlgo, void *prngContext,
 #endif
 #if (ACME_CLIENT_ED448_SUPPORT == ENABLED)
    //Ed448 algorithm?
-   if(!osStrcmp(alg, "EdDSA") && !osStrcmp(crv, "Ed448"))
+   if(osStrcmp(alg, "EdDSA") == 0 && osStrcmp(crv, "Ed448") == 0)
    {
       const EddsaPrivateKey *eddsaPrivateKey;
       uint8_t d[ED448_PRIVATE_KEY_LEN];

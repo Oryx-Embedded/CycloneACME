@@ -38,7 +38,7 @@
  * - RFC 7638: JSON Web Key (JWK) Thumbprint
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.4.2
+ * @version 2.4.4
  **/
 
 //Switch to the appropriate trace level
@@ -1055,7 +1055,7 @@ const char_t *acmeClientGetHttpKeyAuthorization(AcmeClientContext *context,
             if(context->challenges[i].type == ACME_CHALLENGE_TYPE_HTTP_01)
             {
                //Compare token values
-               if(!osStrcmp(context->challenges[i].token, token))
+               if(osStrcmp(context->challenges[i].token, token) == 0)
                {
                   //Point to the key authorization
                   keyAuth = context->challenges[i].keyAuth;
@@ -1112,8 +1112,8 @@ const char_t *acmeClientGetDnsKeyAuthorization(AcmeClientContext *context,
                   //A wildcard domain name consists of a single asterisk character
                   //followed by a single full stop character ("*.") followed by a
                   //domain name
-                  if(!osStrncmp(identifier, "*.", 2) &&
-                     !osStrcmp(context->challenges[i].identifier, identifier + 2))
+                  if(osStrncmp(identifier, "*.", 2) == 0 &&
+                     osStrcmp(context->challenges[i].identifier, identifier + 2) == 0)
                   {
                      //Point to the key authorization digest
                      keyAuth = context->challenges[i].keyAuth;
@@ -1123,7 +1123,7 @@ const char_t *acmeClientGetDnsKeyAuthorization(AcmeClientContext *context,
                else
                {
                   //Compare identifier values
-                  if(!osStrcmp(context->challenges[i].identifier, identifier))
+                  if(osStrcmp(context->challenges[i].identifier, identifier) == 0)
                   {
                      //Point to the key authorization digest
                      keyAuth = context->challenges[i].keyAuth;
@@ -1175,7 +1175,7 @@ const char_t *acmeClientGetTlsAlpnCertificate(AcmeClientContext *context,
             if(context->challenges[i].type == ACME_CHALLENGE_TYPE_TLS_ALPN_01)
             {
                //Compare identifier values
-               if(!osStrcmp(context->challenges[i].identifier, identifier))
+               if(osStrcmp(context->challenges[i].identifier, identifier) == 0)
                {
                   //Point to the self-signed certificate
                   cert = context->challenges[i].cert;

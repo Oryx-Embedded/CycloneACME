@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.4.2
+ * @version 2.4.4
  **/
 
 //Switch to the appropriate trace level
@@ -204,7 +204,7 @@ error_t acmeClientParseDownloadCertResponse(AcmeClientContext *context,
       return ERROR_INVALID_RESPONSE;
 
    //Invalid media type?
-   if(osStrcasecmp(context->contentType, "application/pem-certificate-chain"))
+   if(osStrcasecmp(context->contentType, "application/pem-certificate-chain") != 0)
       return ERROR_INVALID_RESPONSE;
 
    //Check whether the body of the response is truncated

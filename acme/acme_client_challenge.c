@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.4.2
+ * @version 2.4.4
  **/
 
 //Switch to the appropriate trace level
@@ -211,23 +211,23 @@ AcmeChallengeStatus acmeClientParseChallengeStatus(const char_t *label)
    AcmeChallengeStatus status;
 
    //Check the status of the challenge (refer to RFC 8555, section 7.1.6)
-   if(!osStrcmp(label, "pending"))
+   if(osStrcmp(label, "pending") == 0)
    {
       //Challenge objects are created in the "pending" state
       status = ACME_CHALLENGE_STATUS_PENDING;
    }
-   else if(!osStrcmp(label, "processing"))
+   else if(osStrcmp(label, "processing") == 0)
    {
       //They transition to the "processing" state when the client responds to
       //the challenge
       status = ACME_CHALLENGE_STATUS_PROCESSING;
    }
-   else if(!osStrcmp(label, "valid"))
+   else if(osStrcmp(label, "valid") == 0)
    {
       //If validation is successful, the challenge moves to the "valid" state
       status = ACME_CHALLENGE_STATUS_VALID;
    }
-   else if(!osStrcmp(label, "invalid"))
+   else if(osStrcmp(label, "invalid") == 0)
    {
       //If there is an error, the challenge moves to the "invalid" state
       status = ACME_CHALLENGE_STATUS_INVALID;
@@ -254,17 +254,17 @@ AcmeChallengeType acmeClientParseChallengeType(const char_t *label)
    AcmeChallengeType type;
 
    //Check challenge type
-   if(!osStrcmp(label, "http-01"))
+   if(osStrcmp(label, "http-01") == 0)
    {
       //HTTP challenge
       type = ACME_CHALLENGE_TYPE_HTTP_01;
    }
-   else if(!osStrcmp(label, "dns-01"))
+   else if(osStrcmp(label, "dns-01") == 0)
    {
       //DNS challenge
       type = ACME_CHALLENGE_TYPE_DNS_01;
    }
-   else if(!osStrcmp(label, "tls-alpn-01"))
+   else if(osStrcmp(label, "tls-alpn-01") == 0)
    {
       //TLS ALPN challenge
       type = ACME_CHALLENGE_TYPE_TLS_ALPN_01;
@@ -307,8 +307,8 @@ AcmeChallengeType acmeClientGetChallengeType(AcmeClientContext *context,
          //A wildcard domain name consists of a single asterisk character
          //followed by a single full stop character ("*.") followed by a
          //domain name
-         if(!osStrncmp(context->identifiers[i].value, "*.", 2) &&
-            !osStrcmp(context->identifiers[i].value + 2, identifier))
+         if(osStrncmp(context->identifiers[i].value, "*.", 2) == 0 &&
+            osStrcmp(context->identifiers[i].value + 2, identifier) == 0)
          {
             type = context->identifiers[i].challengeType;
             break;
@@ -317,7 +317,7 @@ AcmeChallengeType acmeClientGetChallengeType(AcmeClientContext *context,
       else
       {
          //Compare identifier values
-         if(!osStrcmp(context->identifiers[i].value, identifier))
+         if(osStrcmp(context->identifiers[i].value, identifier) == 0)
          {
             type = context->identifiers[i].challengeType;
             break;
@@ -514,17 +514,17 @@ error_t acmeClientGenerateTlsAlpnCert(AcmeClientContext *context,
             ecParams = &certReqInfo->subjectPublicKeyInfo.ecParams;
 
             //Select the relevant elliptic curve
-            if(!osStrcmp(context->certKey.ecParams.name, "secp256r1"))
+            if(osStrcmp(context->certKey.ecParams.name, "secp256r1") == 0)
             {
                ecParams->namedCurve.value = SECP256R1_OID;
                ecParams->namedCurve.length = sizeof(SECP256R1_OID);
             }
-            else if(!osStrcmp(context->certKey.ecParams.name, "secp384r1"))
+            else if(osStrcmp(context->certKey.ecParams.name, "secp384r1") == 0)
             {
                ecParams->namedCurve.value = SECP384R1_OID;
                ecParams->namedCurve.length = sizeof(SECP384R1_OID);
             }
-            else if(!osStrcmp(context->certKey.ecParams.name, "secp521r1"))
+            else if(osStrcmp(context->certKey.ecParams.name, "secp521r1") == 0)
             {
                ecParams->namedCurve.value = SECP521R1_OID;
                ecParams->namedCurve.length = sizeof(SECP521R1_OID);

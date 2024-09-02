@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.4.2
+ * @version 2.4.4
  **/
 
 //Switch to the appropriate trace level
@@ -157,19 +157,19 @@ error_t acmeClientLoadKeyPair(AcmeKeyPair *keyPair, const char_t *publicKey,
             keyPair->privateKey = &keyPair->ecPrivateKey;
 
             //Select the relevant signature algorithm
-            if(!osStrcmp(keyPair->ecParams.name, "secp256r1"))
+            if(osStrcmp(keyPair->ecParams.name, "secp256r1") == 0)
             {
                //ECDSA using P-256 and SHA-256
                osStrcpy(keyPair->alg, "ES256");
                osStrcpy(keyPair->crv, "P-256");
             }
-            else if(!osStrcmp(keyPair->ecParams.name, "secp384r1"))
+            else if(osStrcmp(keyPair->ecParams.name, "secp384r1") == 0)
             {
                //ECDSA using P-384 and SHA-384
                osStrcpy(keyPair->alg, "ES384");
                osStrcpy(keyPair->crv, "P-384");
             }
-            else if(!osStrcmp(keyPair->ecParams.name, "secp521r1"))
+            else if(osStrcmp(keyPair->ecParams.name, "secp521r1") == 0)
             {
                //ECDSA using P-521 and SHA-512
                osStrcpy(keyPair->alg, "ES512");
@@ -493,7 +493,7 @@ error_t acmeClientSendRequest(AcmeClientContext *context)
             //An error response with the "badNonce" error type must include a
             //Replay-Nonce header field with a fresh nonce that the server will
             //accept in a retry of the original query
-            if(!osStrcmp(context->errorType, "urn:ietf:params:acme:error:badNonce") &&
+            if(osStrcmp(context->errorType, "urn:ietf:params:acme:error:badNonce") == 0 &&
                context->badNonceErrors < ACME_CLIENT_MAX_BAD_NONCE_ERRORS &&
                context->nonce[0] != '\0')
             {
@@ -612,7 +612,7 @@ error_t acmeClientFormatRequestHeader(AcmeClientContext *context,
    }
 
    //POST request?
-   if(!osStrcmp(method, "POST"))
+   if(osStrcmp(method, "POST") == 0)
    {
       //Client requests must have the Content-Type header field set to
       //"application/jose+json" (refer to RFC 8555, section 6.2)
@@ -897,17 +897,17 @@ error_t acmeClientGenerateCsr(AcmeClientContext *context, uint8_t *buffer,
          ecParams = &certReqInfo->subjectPublicKeyInfo.ecParams;
 
          //Select the relevant elliptic curve
-         if(!osStrcmp(context->certKey.ecParams.name, "secp256r1"))
+         if(osStrcmp(context->certKey.ecParams.name, "secp256r1") == 0)
          {
             ecParams->namedCurve.value = SECP256R1_OID;
             ecParams->namedCurve.length = sizeof(SECP256R1_OID);
          }
-         else if(!osStrcmp(context->certKey.ecParams.name, "secp384r1"))
+         else if(osStrcmp(context->certKey.ecParams.name, "secp384r1") == 0)
          {
             ecParams->namedCurve.value = SECP384R1_OID;
             ecParams->namedCurve.length = sizeof(SECP384R1_OID);
          }
-         else if(!osStrcmp(context->certKey.ecParams.name, "secp521r1"))
+         else if(osStrcmp(context->certKey.ecParams.name, "secp521r1") == 0)
          {
             ecParams->namedCurve.value = SECP521R1_OID;
             ecParams->namedCurve.length = sizeof(SECP521R1_OID);
@@ -1122,7 +1122,7 @@ error_t acmeClientParseProblemDetails(AcmeClientContext *context)
    context->errorType[0] = '\0';
 
    //Check the media type
-   if(!osStrcasecmp(context->contentType, "application/problem+json"))
+   if(osStrcasecmp(context->contentType, "application/problem+json") == 0)
    {
       //When the server responds with an error status, it should provide
       //additional information using a problem document (refer to RFC 7807)

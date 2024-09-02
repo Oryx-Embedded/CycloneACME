@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.4.2
+ * @version 2.4.4
  **/
 
 //Switch to the appropriate trace level
@@ -426,7 +426,7 @@ error_t acmeClientParseNewOrderResponse(AcmeClientContext *context)
       return ERROR_INVALID_RESPONSE;
 
    //Invalid media type?
-   if(osStrcasecmp(context->contentType, "application/json"))
+   if(osStrcasecmp(context->contentType, "application/json") != 0)
       return ERROR_INVALID_RESPONSE;
 
    //Check whether the body of the response is truncated
@@ -700,7 +700,7 @@ error_t acmeClientParseOrderStatusResponse(AcmeClientContext *context)
       return ERROR_INVALID_RESPONSE;
 
    //Invalid media type?
-   if(osStrcasecmp(context->contentType, "application/json"))
+   if(osStrcasecmp(context->contentType, "application/json") != 0)
       return ERROR_INVALID_RESPONSE;
 
    //Check whether the body of the response is truncated
@@ -978,29 +978,29 @@ AcmeOrderStatus acmeClientParseOrderStatus(const char_t *label)
    AcmeOrderStatus status;
 
    //Check the status of the order (refer to RFC 8555, section 7.1.6)
-   if(!osStrcmp(label, "pending"))
+   if(osStrcmp(label, "pending") == 0)
    {
       // Order objects are created in the "pending" state
       status = ACME_ORDER_STATUS_PENDING;
    }
-   else if(!osStrcmp(label, "ready"))
+   else if(osStrcmp(label, "ready") == 0)
    {
       //Once all of the authorizations listed in the order object are in the
       //"valid" state, the order transitions to the "ready" state
       status = ACME_ORDER_STATUS_READY;
    }
-   else if(!osStrcmp(label, "processing"))
+   else if(osStrcmp(label, "processing") == 0)
    {
       //The order moves to the "processing" state after the client submits a
       //request to the order's "finalize" URL
       status = ACME_ORDER_STATUS_PROCESSING;
    }
-   else if(!osStrcmp(label, "valid"))
+   else if(osStrcmp(label, "valid") == 0)
    {
       //Once the certificate is issued, the order enters the "valid" state
       status = ACME_ORDER_STATUS_VALID;
    }
-   else if(!osStrcmp(label, "invalid"))
+   else if(osStrcmp(label, "invalid") == 0)
    {
       //The order also moves to the "invalid" state if it expires or one of
       //itS authorizations enters a final state other than "valid" ("expired",

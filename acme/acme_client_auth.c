@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.4.2
+ * @version 2.4.4
  **/
 
 //Switch to the appropriate trace level
@@ -214,7 +214,7 @@ error_t acmeClientParseAuthorizationResponse(AcmeClientContext *context,
       return ERROR_INVALID_RESPONSE;
 
    //Invalid media type?
-   if(osStrcasecmp(context->contentType, "application/json"))
+   if(osStrcasecmp(context->contentType, "application/json") != 0)
       return ERROR_INVALID_RESPONSE;
 
    //Check whether the body of the response is truncated
@@ -426,35 +426,35 @@ AcmeAuthStatus acmeClientParseAuthorizationStatus(const char_t *label)
    AcmeAuthStatus status;
 
    //Check the status of the authorization (refer to RFC 8555, section 7.1.6)
-   if(!osStrcmp(label, "pending"))
+   if(osStrcmp(label, "pending") == 0)
    {
       //Authorization objects are created in the "pending" state
       status = ACME_AUTH_STATUS_PENDING;
    }
-   else if(!osStrcmp(label, "valid"))
+   else if(osStrcmp(label, "valid") == 0)
    {
       //If one of the challenges listed in the authorization transitions to the
       //"valid" state, then the authorization also changes to the "valid" state
       status = ACME_AUTH_STATUS_VALID;
    }
-   else if(!osStrcmp(label, "invalid"))
+   else if(osStrcmp(label, "invalid") == 0)
    {
       //If the client attempts to fulfill a challenge and fails, or if there is
       //an error while the authorization is still pending, then the authorization
       //transitions to the "invalid" state
       status = ACME_AUTH_STATUS_INVALID;
    }
-   else if(!osStrcmp(label, "expired"))
+   else if(osStrcmp(label, "expired") == 0)
    {
       //A valid authorization can expire
       status = ACME_AUTH_STATUS_EXPIRED;
    }
-   else if(!osStrcmp(label, "deactivated"))
+   else if(osStrcmp(label, "deactivated") == 0)
    {
       //An valid authorization can be deactivated by the client
       status = ACME_AUTH_STATUS_DEACTIVATED;
    }
-   else if(!osStrcmp(label, "revoked"))
+   else if(osStrcmp(label, "revoked") == 0)
    {
       //An valid authorization can be revoked by the server
       status = ACME_AUTH_STATUS_REVOKED;
