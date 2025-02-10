@@ -6,7 +6,7 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  *
- * Copyright (C) 2019-2024 Oryx Embedded SARL. All rights reserved.
+ * Copyright (C) 2019-2025 Oryx Embedded SARL. All rights reserved.
  *
  * This file is part of CycloneACME Open.
  *
@@ -38,7 +38,7 @@
  * - RFC 7638: JSON Web Key (JWK) Thumbprint
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.4.4
+ * @version 2.5.0
  **/
 
 //Switch to the appropriate trace level
@@ -391,12 +391,14 @@ error_t acmeClientConnect(AcmeClientContext *context,
  * @param[in] publicKeyLen Length of the public key
  * @param[in] privateKey Private key (PEM format)
  * @param[in] privateKeyLen Length of the private key
+ * @param[in] password NULL-terminated string containing the password. This
+ *   parameter is required if the private key is encrypted
  * @return Error code
  **/
 
 error_t acmeClientSetAccountKey(AcmeClientContext *context,
-   const char_t *publicKey, size_t publicKeyLen,
-   const char_t *privateKey, size_t privateKeyLen)
+   const char_t *publicKey, size_t publicKeyLen, const char_t *privateKey,
+   size_t privateKeyLen, const char_t *password)
 {
    //Check parameters
    if(context == NULL || publicKey == NULL || publicKeyLen == 0 ||
@@ -410,7 +412,7 @@ error_t acmeClientSetAccountKey(AcmeClientContext *context,
 
    //The public and private keys are encoded in PEM format
    return acmeClientLoadKeyPair(&context->accountKey, publicKey, publicKeyLen,
-      privateKey, privateKeyLen);
+      privateKey, privateKeyLen, password);
 }
 
 
@@ -453,8 +455,8 @@ error_t acmeClientCreateAccount(AcmeClientContext *context,
 
             //The public and private keys are encoded in PEM format
             error = acmeClientLoadKeyPair(&context->accountKey,
-               params->publicKey, params->publicKeyLen,
-               params->privateKey, params->privateKeyLen);
+               params->publicKey, params->publicKeyLen, params->privateKey,
+               params->privateKeyLen, params->password);
          }
 
          //Check status code
@@ -646,12 +648,14 @@ error_t acmeClientUpdateAccount(AcmeClientContext *context,
  * @param[in] publicKeyLen Length of the new public key
  * @param[in] privateKey New private key (PEM format)
  * @param[in] privateKeyLen Length of the new private key
+ * @param[in] password NULL-terminated string containing the password. This
+ *   parameter is required if the private key is encrypted
  * @return Error code
  **/
 
 error_t acmeClientChangeAccountKey(AcmeClientContext *context,
-   const char_t *publicKey, size_t publicKeyLen,
-   const char_t *privateKey, size_t privateKeyLen)
+   const char_t *publicKey, size_t publicKeyLen, const char_t *privateKey,
+   size_t privateKeyLen, const char_t *password)
 {
    error_t error;
 
@@ -723,7 +727,7 @@ error_t acmeClientChangeAccountKey(AcmeClientContext *context,
          //account, by sending a POST request to the server's keyChange
          //URL (refer to RFC 8555, section 7.3.5)
          error = acmeClientSendKeyChangeRequest(context, publicKey,
-            publicKeyLen, privateKey, privateKeyLen);
+            publicKeyLen, privateKey, privateKeyLen, password);
 
          //Check status code
          if(!error)
@@ -733,7 +737,7 @@ error_t acmeClientChangeAccountKey(AcmeClientContext *context,
 
             //Load the new account key
             error = acmeClientLoadKeyPair(&context->accountKey, publicKey,
-               publicKeyLen, privateKey, privateKeyLen);
+               publicKeyLen, privateKey, privateKeyLen, password);
 
             //Update ACME client state
             context->state = ACME_CLIENT_STATE_CONNECTED;
@@ -1565,15 +1569,19 @@ error_t acmeClientDownloadCertificate(AcmeClientContext *context,
  * @param[in] context Pointer to the ACME client context
  * @param[in] cert Certificate to be revoked (PEM format)
  * @param[in] certLen Length of the certificate, in bytes
- * @param[in] privateKey Reserved parameter (must be NULL)
- * @param[in] privateKeyLen Reserved parameter (must be 0)
+ * @param[in] privateKey Private key associated with the certificate (PEM
+ *   format). This parameter is required if the certificate key, rather than
+ *   the account key, is to be used to sign the revocation request
+ * @param[in] privateKeyLen Length of the private key
+ * @param[in] password NULL-terminated string containing the password. This
+ *   parameter is required if the private key is encrypted
  * @param[in] reason Revocation reason code
  * @return Error code
  **/
 
 error_t acmeClientRevokeCertificate(AcmeClientContext *context,
    const char_t *cert, size_t certLen, const char_t *privateKey,
-   size_t privateKeyLen, AcmeReasonCode reason)
+   size_t privateKeyLen, const char_t *password, AcmeReasonCode reason)
 {
    error_t error;
 
@@ -1617,8 +1625,24 @@ error_t acmeClientRevokeCertificate(AcmeClientContext *context,
          //Check status code
          if(!error)
          {
-            //Update ACME client state
-            context->state = ACME_CLIENT_STATE_NEW_ACCOUNT;
+            //Revocation requests are different from other ACME requests in
+            //that they can be signed with either an account key pair or the
+            //key pair in the certificate (refer to RFC 8555, section 7.6)
+            if(privateKey != NULL && privateKeyLen > 0)
+            {
+               //Use the certificate key pair
+               context->state = ACME_CLIENT_STATE_REVOKE_CERT;
+            }
+            else if(context->accountKey.type != X509_KEY_TYPE_UNKNOWN)
+            {
+               //Use the account key pair
+               context->state = ACME_CLIENT_STATE_NEW_ACCOUNT;
+            }
+            else
+            {
+               //Report an error
+               error = ERROR_INVALID_KEY;
+            }
          }
       }
       else if(context->state == ACME_CLIENT_STATE_NEW_ACCOUNT)
@@ -1641,7 +1665,8 @@ error_t acmeClientRevokeCertificate(AcmeClientContext *context,
          //To request that a certificate be revoked, the client sends a POST
          //request to the ACME server's revokeCert URL (refer to RFC 8555,
          //section 7.6)
-         error = acmeClientSendRevokeCertRequest(context, cert, certLen, reason);
+         error = acmeClientSendRevokeCertRequest(context, cert, certLen,
+            privateKey, privateKeyLen, password, reason);
 
          //Check status code
          if(!error)

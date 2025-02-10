@@ -6,7 +6,7 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  *
- * Copyright (C) 2019-2024 Oryx Embedded SARL. All rights reserved.
+ * Copyright (C) 2019-2025 Oryx Embedded SARL. All rights reserved.
  *
  * This file is part of CycloneACME Open.
  *
@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.4.4
+ * @version 2.5.0
  **/
 
 //Switch to the appropriate trace level
@@ -285,8 +285,8 @@ error_t acmeClientFormatNewAccountRequest(AcmeClientContext *context,
       {
          //Generate the JSON Web Signature
          error = jwsCreate(context->prngAlgo, context->prngContext, protected,
-            payload, context->accountKey.alg, context->accountKey.crv,
-            context->accountKey.privateKey, context->buffer, &context->bufferLen);
+            payload, context->accountKey.alg, context->accountKey.privateKey,
+            context->buffer, &context->bufferLen);
       }
 
       //Release JSON string
@@ -505,8 +505,8 @@ error_t acmeFormatUpdateAccountRequest(AcmeClientContext *context,
       {
          //Generate the JSON Web Signature
          error = jwsCreate(context->prngAlgo, context->prngContext, protected,
-            payload, context->accountKey.alg, context->accountKey.crv,
-            context->accountKey.privateKey, context->buffer, &context->bufferLen);
+            payload, context->accountKey.alg, context->accountKey.privateKey,
+            context->buffer, &context->bufferLen);
       }
 
       //Release JSON string
@@ -555,12 +555,14 @@ error_t acmeClientParseUpdateAccountResponse(AcmeClientContext *context)
  * @param[in] publicKeyLen Length of the new public key
  * @param[in] privateKey New private key (PEM format)
  * @param[in] privateKeyLen Length of the new private key
+ * @param[in] password NULL-terminated string containing the password. This
+ *   parameter is required if the private key is encrypted
  * @return Error code
  **/
 
 error_t acmeClientSendKeyChangeRequest(AcmeClientContext *context,
-   const char_t *publicKey, size_t publicKeyLen,
-   const char_t *privateKey, size_t privateKeyLen)
+   const char_t *publicKey, size_t publicKeyLen, const char_t *privateKey,
+   size_t privateKeyLen, const char_t *password)
 {
    error_t error;
 
@@ -587,7 +589,7 @@ error_t acmeClientSendKeyChangeRequest(AcmeClientContext *context,
       {
          //Format the body of the HTTP request
          error = acmeClientFormatKeyChangeRequest(context, publicKey,
-            publicKeyLen, privateKey, privateKeyLen);
+            publicKeyLen, privateKey, privateKeyLen, password);
 
          //Check status code
          if(!error)
@@ -649,12 +651,14 @@ error_t acmeClientSendKeyChangeRequest(AcmeClientContext *context,
  * @param[in] publicKeyLen Length of the new public key
  * @param[in] privateKey New private key (PEM format)
  * @param[in] privateKeyLen Length of the new private key
+ * @param[in] password NULL-terminated string containing the password. This
+ *   parameter is required if the private key is encrypted
  * @return Error code
  **/
 
 error_t acmeClientFormatKeyChangeRequest(AcmeClientContext *context,
-   const char_t *publicKey, size_t publicKeyLen,
-   const char_t *privateKey, size_t privateKeyLen)
+   const char_t *publicKey, size_t publicKeyLen, const char_t *privateKey,
+   size_t privateKeyLen, const char_t *password)
 {
    error_t error;
    int_t ret;
@@ -674,7 +678,7 @@ error_t acmeClientFormatKeyChangeRequest(AcmeClientContext *context,
 
    //Load the new account key
    error = acmeClientLoadKeyPair(&newAccountKey, publicKey, publicKeyLen,
-      privateKey, privateKeyLen);
+      privateKey, privateKeyLen, password);
    //Any error to report?
    if(error)
       return error;
@@ -720,9 +724,9 @@ error_t acmeClientFormatKeyChangeRequest(AcmeClientContext *context,
       if(!error)
       {
          //The inner JWS is signed with the requested new account key
-         error = jwsCreate(context->prngAlgo, context->prngContext,
-            protected, keyChange, newAccountKey.alg, newAccountKey.crv,
-            newAccountKey.privateKey, context->buffer, &n);
+         error = jwsCreate(context->prngAlgo, context->prngContext, protected,
+            keyChange, newAccountKey.alg, newAccountKey.privateKey,
+            context->buffer, &n);
       }
 
       //Release JSON string
@@ -765,8 +769,8 @@ error_t acmeClientFormatKeyChangeRequest(AcmeClientContext *context,
             //Generate the outer JWS
             error = jwsCreate(context->prngAlgo, context->prngContext,
                protected, payload, context->accountKey.alg,
-               context->accountKey.crv, context->accountKey.privateKey,
-               context->buffer, &context->bufferLen);
+               context->accountKey.privateKey, context->buffer,
+               &context->bufferLen);
          }
 
          //Release JSON string

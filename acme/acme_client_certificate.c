@@ -6,7 +6,7 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  *
- * Copyright (C) 2019-2024 Oryx Embedded SARL. All rights reserved.
+ * Copyright (C) 2019-2025 Oryx Embedded SARL. All rights reserved.
  *
  * This file is part of CycloneACME Open.
  *
@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.4.4
+ * @version 2.5.0
  **/
 
 //Switch to the appropriate trace level
@@ -167,8 +167,8 @@ error_t acmeClientFormatDownloadCertRequest(AcmeClientContext *context)
    {
       //Generate the JSON Web Signature
       error = jwsCreate(context->prngAlgo, context->prngContext, protected,
-         payload, context->accountKey.alg, context->accountKey.crv,
-         context->accountKey.privateKey, context->buffer, &context->bufferLen);
+         payload, context->accountKey.alg, context->accountKey.privateKey,
+         context->buffer, &context->bufferLen);
    }
 
    //Return status code
@@ -238,12 +238,18 @@ error_t acmeClientParseDownloadCertResponse(AcmeClientContext *context,
  * @param[in] context Pointer to the ACME client context
  * @param[in] cert Certificate to be revoked (PEM format)
  * @param[in] certLen Length of the certificate, in bytes
+ * @param[in] privateKey Private key associated with the certificate (PEM
+ *   format)
+ * @param[in] privateKeyLen Length of the private key
+ * @param[in] password NULL-terminated string containing the password. This
+ *   parameter is required if the private key is encrypted
  * @param[in] reason Revocation reason code
  * @return Error code
  **/
 
 error_t acmeClientSendRevokeCertRequest(AcmeClientContext *context,
-   const char_t *cert, size_t certLen, AcmeReasonCode reason)
+   const char_t *cert, size_t certLen, const char_t *privateKey,
+   size_t privateKeyLen, const char_t *password, AcmeReasonCode reason)
 {
    error_t error;
 
@@ -269,7 +275,8 @@ error_t acmeClientSendRevokeCertRequest(AcmeClientContext *context,
       else if(context->requestState == ACME_REQ_STATE_FORMAT_BODY)
       {
          //Format the body of the HTTP request
-         error = acmeClientFormatRevokeCertRequest(context, cert, certLen, reason);
+         error = acmeClientFormatRevokeCertRequest(context, cert, certLen,
+            privateKey, privateKeyLen, password, reason);
 
          //Check status code
          if(!error)
@@ -329,12 +336,18 @@ error_t acmeClientSendRevokeCertRequest(AcmeClientContext *context,
  * @param[in] context Pointer to the ACME client context
  * @param[in] cert Certificate to be revoked (PEM format)
  * @param[in] certLen Length of the certificate, in bytes
+ * @param[in] privateKey Private key associated with the certificate (PEM
+ *   format)
+ * @param[in] privateKeyLen Length of the private key
+ * @param[in] password NULL-terminated string containing the password. This
+ *   parameter is required if the private key is encrypted
  * @param[in] reason Revocation reason code
  * @return Error code
  **/
 
 error_t acmeClientFormatRevokeCertRequest(AcmeClientContext *context,
-   const char_t *cert, size_t certLen, AcmeReasonCode reason)
+   const char_t *cert, size_t certLen, const char_t *privateKey,
+   size_t privateKeyLen, const char_t *password, AcmeReasonCode reason)
 {
    error_t error;
    int_t ret;
@@ -382,18 +395,48 @@ error_t acmeClientFormatRevokeCertRequest(AcmeClientContext *context,
       //Point to the buffer where to format the JWS protected header
       protected = context->buffer;
 
-      //Format JWS protected header
-      error = acmeClientFormatJwsProtectedHeader(&context->accountKey,
-         context->account.url, context->nonce, context->directory.revokeCert,
-         protected, &n);
-
-      //Check status code
-      if(!error)
+      //Revocation requests are different from other ACME requests in that they
+      //can be signed with either an account key pair or the key pair in the
+      //certificate (refer to RFC 8555, section 7.6)
+      if(privateKey != NULL && privateKeyLen > 0)
       {
-         //Generate the JSON Web Signature
-         error = jwsCreate(context->prngAlgo, context->prngContext, protected,
-            payload, context->accountKey.alg, context->accountKey.crv,
-            context->accountKey.privateKey, context->buffer, &context->bufferLen);
+         AcmeKeyPair certKey;
+
+         //Load the certificate key pair
+         error = acmeClientLoadCertKeyPair(&certKey, cert, certLen,
+            privateKey, privateKeyLen, password);
+
+         //Use the certificate key pair for the signature
+         error = acmeClientFormatJwsProtectedHeader(&certKey, NULL,
+            context->nonce, context->directory.revokeCert, protected, &n);
+
+         //Check status code
+         if(!error)
+         {
+            //Generate the JSON Web Signature
+            error = jwsCreate(context->prngAlgo, context->prngContext,
+               protected, payload, context->accountKey.alg, certKey.privateKey,
+               context->buffer, &context->bufferLen);
+         }
+
+         //Unload the certificate key pair
+         acmeClientUnloadKeyPair(&certKey);
+      }
+      else
+      {
+         //Use the account key pair for the signature
+         error = acmeClientFormatJwsProtectedHeader(&context->accountKey,
+            context->account.url, context->nonce, context->directory.revokeCert,
+            protected, &n);
+
+         //Check status code
+         if(!error)
+         {
+            //Generate the JSON Web Signature
+            error = jwsCreate(context->prngAlgo, context->prngContext, protected,
+               payload, context->accountKey.alg, context->accountKey.privateKey,
+               context->buffer, &context->bufferLen);
+         }
       }
 
       //Release JSON string

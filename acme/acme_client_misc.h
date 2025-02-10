@@ -6,7 +6,7 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  *
- * Copyright (C) 2019-2024 Oryx Embedded SARL. All rights reserved.
+ * Copyright (C) 2019-2025 Oryx Embedded SARL. All rights reserved.
  *
  * This file is part of CycloneACME Open.
  *
@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.4.4
+ * @version 2.5.0
  **/
 
 #ifndef _ACME_CLIENT_MISC_H
@@ -41,7 +41,12 @@ extern "C" {
 
 //ACME client related functions
 error_t acmeClientLoadKeyPair(AcmeKeyPair *keyPair, const char_t *publicKey,
-   size_t publicKeyLen, const char_t *privateKey, size_t privateKeyLen);
+   size_t publicKeyLen, const char_t *privateKey, size_t privateKeyLen,
+   const char_t *password);
+
+error_t acmeClientLoadCertKeyPair(AcmeKeyPair *keyPair, const char_t *cert,
+   size_t certLen, const char_t *privateKey, size_t privateKeyLen,
+   const char_t *password);
 
 void acmeClientUnloadKeyPair(AcmeKeyPair *keyPair);
 

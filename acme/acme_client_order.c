@@ -6,7 +6,7 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  *
- * Copyright (C) 2019-2024 Oryx Embedded SARL. All rights reserved.
+ * Copyright (C) 2019-2025 Oryx Embedded SARL. All rights reserved.
  *
  * This file is part of CycloneACME Open.
  *
@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.4.4
+ * @version 2.5.0
  **/
 
 //Switch to the appropriate trace level
@@ -165,7 +165,8 @@ error_t acmeClientInitOrder(AcmeClientContext *context,
 
    //The public and private keys are encoded in PEM format
    error = acmeClientLoadKeyPair(&context->certKey, params->publicKey,
-      params->publicKeyLen, params->privateKey, params->privateKeyLen);
+      params->publicKeyLen, params->privateKey, params->privateKeyLen,
+      params->password);
 
    //Return status code
    return error;
@@ -369,8 +370,8 @@ error_t acmeClientFormatNewOrderRequest(AcmeClientContext *context,
       {
          //Generate the JSON Web Signature
          error = jwsCreate(context->prngAlgo, context->prngContext, protected,
-            payload, context->accountKey.alg, context->accountKey.crv,
-            context->accountKey.privateKey, context->buffer, &context->bufferLen);
+            payload, context->accountKey.alg, context->accountKey.privateKey,
+            context->buffer, &context->bufferLen);
       }
 
       //Release JSON string
@@ -666,8 +667,8 @@ error_t acmeClientFormatOrderStatusRequest(AcmeClientContext *context)
    {
       //Generate the JSON Web Signature
       error = jwsCreate(context->prngAlgo, context->prngContext, protected,
-         payload, context->accountKey.alg, context->accountKey.crv,
-         context->accountKey.privateKey, context->buffer, &context->bufferLen);
+         payload, context->accountKey.alg, context->accountKey.privateKey,
+         context->buffer, &context->bufferLen);
    }
 
    //Return status code
@@ -925,8 +926,8 @@ error_t acmeClientFormatFinalizeOrderRequest(AcmeClientContext *context)
       {
          //Generate the JSON Web Signature
          error = jwsCreate(context->prngAlgo, context->prngContext, protected,
-            payload, context->accountKey.alg, context->accountKey.crv,
-            context->accountKey.privateKey, context->buffer, &context->bufferLen);
+            payload, context->accountKey.alg, context->accountKey.privateKey,
+            context->buffer, &context->bufferLen);
       }
 
       //Release JSON string

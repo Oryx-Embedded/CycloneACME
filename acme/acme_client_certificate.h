@@ -6,7 +6,7 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  *
- * Copyright (C) 2019-2024 Oryx Embedded SARL. All rights reserved.
+ * Copyright (C) 2019-2025 Oryx Embedded SARL. All rights reserved.
  *
  * This file is part of CycloneACME Open.
  *
@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.4.4
+ * @version 2.5.0
  **/
 
 #ifndef _ACME_CLIENT_CERTIFICATE_H
@@ -49,10 +49,12 @@ error_t acmeClientParseDownloadCertResponse(AcmeClientContext *context,
    char_t *buffer, size_t size, size_t *length);
 
 error_t acmeClientSendRevokeCertRequest(AcmeClientContext *context,
-   const char_t *cert, size_t certLen, AcmeReasonCode reason);
+   const char_t *cert, size_t certLen, const char_t *privateKey,
+   size_t privateKeyLen, const char_t *password, AcmeReasonCode reason);
 
 error_t acmeClientFormatRevokeCertRequest(AcmeClientContext *context,
-   const char_t *cert, size_t certLen, AcmeReasonCode reason);
+   const char_t *cert, size_t certLen, const char_t *privateKey,
+   size_t privateKeyLen, const char_t *password, AcmeReasonCode reason);
 
 error_t acmeClientParseRevokeCertResponse(AcmeClientContext *context);
 

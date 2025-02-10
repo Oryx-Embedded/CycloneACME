@@ -6,7 +6,7 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  *
- * Copyright (C) 2019-2024 Oryx Embedded SARL. All rights reserved.
+ * Copyright (C) 2019-2025 Oryx Embedded SARL. All rights reserved.
  *
  * This file is part of CycloneACME Open.
  *
@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.4.4
+ * @version 2.5.0
  **/
 
 #ifndef _ACME_CLIENT_H
@@ -66,13 +66,13 @@
 #endif
 
 //Version string
-#define CYCLONE_ACME_VERSION_STRING "2.4.4"
+#define CYCLONE_ACME_VERSION_STRING "2.5.0"
 //Major version
 #define CYCLONE_ACME_MAJOR_VERSION 2
 //Minor version
-#define CYCLONE_ACME_MINOR_VERSION 4
+#define CYCLONE_ACME_MINOR_VERSION 5
 //Revision number
-#define CYCLONE_ACME_REV_NUMBER 4
+#define CYCLONE_ACME_REV_NUMBER 0
 
 //ACME client support
 #ifndef ACME_CLIENT_SUPPORT
@@ -413,7 +413,6 @@ typedef struct
 {
    X509KeyType type;
    char_t alg[8];
-   char_t crv[8];
    const void *publicKey;
    const void *privateKey;
 #if (ACME_CLIENT_RSA_SUPPORT == ENABLED)
@@ -421,7 +420,6 @@ typedef struct
    RsaPrivateKey rsaPrivateKey;
 #endif
 #if (ACME_CLIENT_ECDSA_SUPPORT == ENABLED)
-   EcDomainParameters ecParams;
    EcPublicKey ecPublicKey;
    EcPrivateKey ecPrivateKey;
 #endif
@@ -446,6 +444,7 @@ typedef struct
    size_t publicKeyLen;                              ///<Length of the account public key, in bytes
    const char_t *privateKey;                         ///<Account private key
    size_t privateKeyLen;                             ///<Length of the account private key, in bytes
+   const char_t *password;                           ///<Password (required if the private key is encrypted)
    const char_t *status;                             ///<Status of the account
 } AcmeAccountParams;
 
@@ -475,6 +474,7 @@ typedef struct
    size_t publicKeyLen;                               ///<Length of the certificate public key, in bytes
    const char_t *privateKey;                          ///<Certificate private key
    size_t privateKeyLen;                              ///<Length of the certificate private key, in bytes
+   const char_t *password;                            ///<Password (required if the private key is encrypted)
 } AcmeOrderParams;
 
 
@@ -625,8 +625,8 @@ error_t acmeClientConnect(AcmeClientContext *context,
    const IpAddr *serverIpAddr, uint16_t serverPort);
 
 error_t acmeClientSetAccountKey(AcmeClientContext *context,
-   const char_t *publicKey, size_t publicKeyLen,
-   const char_t *privateKey, size_t privateKeyLen);
+   const char_t *publicKey, size_t publicKeyLen, const char_t *privateKey,
+   size_t privateKeyLen, const char_t *password);
 
 error_t acmeClientCreateAccount(AcmeClientContext *context,
    const AcmeAccountParams *params);
@@ -635,8 +635,8 @@ error_t acmeClientUpdateAccount(AcmeClientContext *context,
    const AcmeAccountParams *params);
 
 error_t acmeClientChangeAccountKey(AcmeClientContext *context,
-   const char_t *publicKey, size_t publicKeyLen,
-   const char_t *privateKey, size_t privateKeyLen);
+   const char_t *publicKey, size_t publicKeyLen, const char_t *privateKey,
+   size_t privateKeyLen, const char_t *password);
 
 error_t acmeClientDeactivateAccount(AcmeClientContext *context);
 
@@ -660,7 +660,7 @@ error_t acmeClientDownloadCertificate(AcmeClientContext *context,
 
 error_t acmeClientRevokeCertificate(AcmeClientContext *context,
    const char_t *cert, size_t certLen, const char_t *privateKey,
-   size_t privateKeyLen, AcmeReasonCode reason);
+   size_t privateKeyLen, const char_t *password, AcmeReasonCode reason);
 
 error_t acmeClientDisconnect(AcmeClientContext *context);
 error_t acmeClientClose(AcmeClientContext *context);

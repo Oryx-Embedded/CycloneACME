@@ -6,7 +6,7 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  *
- * Copyright (C) 2019-2024 Oryx Embedded SARL. All rights reserved.
+ * Copyright (C) 2019-2025 Oryx Embedded SARL. All rights reserved.
  *
  * This file is part of CycloneACME Open.
  *
@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.4.4
+ * @version 2.5.0
  **/
 
 //Switch to the appropriate trace level
@@ -36,8 +36,10 @@
 #include "acme/acme_client_jose.h"
 #include "acme/acme_client_misc.h"
 #include "pkix/pem_import.h"
+#include "pkix/pem_cert_key_import.h"
 #include "pkix/x509_csr_create.h"
 #include "encoding/base64url.h"
+#include "encoding/oid.h"
 #include "jansson.h"
 #include "jansson_private.h"
 #include "debug.h"
@@ -53,205 +55,147 @@
  * @param[in] publicKeyLen Length of the public key
  * @param[in] privateKey Private key (PEM format)
  * @param[in] privateKeyLen Length of the private key
+ * @param[in] password NULL-terminated string containing the password. This
+ *   parameter is required if the private key is encrypted
  * @return Error code
  **/
 
 error_t acmeClientLoadKeyPair(AcmeKeyPair *keyPair, const char_t *publicKey,
-   size_t publicKeyLen, const char_t *privateKey, size_t privateKeyLen)
+   size_t publicKeyLen, const char_t *privateKey, size_t privateKeyLen,
+   const char_t *password)
 {
    error_t error;
-   X509KeyType publicKeyType;
-   X509KeyType privateKeyType;
+   X509KeyType type;
 
-   //Retrieve the type of a PEM-encoded public key
-   error = pemGetPublicKeyType(publicKey, publicKeyLen, &publicKeyType);
+   //Clear key pair
+   osMemset(keyPair, 0, sizeof(AcmeKeyPair));
 
-   //Check status code
-   if(!error)
-   {
-      //Retrieve the type of a PEM-encoded private key
-      error = pemGetPrivateKeyType(privateKey, privateKeyLen, &privateKeyType);
-   }
+   //Extract the type of the public key
+   type = pemGetPublicKeyType(publicKey, publicKeyLen);
 
-   //Check status code
-   if(!error)
-   {
 #if (ACME_CLIENT_RSA_SUPPORT == ENABLED)
-      //Valid RSA key pair?
-      if(publicKeyType == X509_KEY_TYPE_RSA &&
-         privateKeyType == X509_KEY_TYPE_RSA)
+   //RSA public key?
+   if(type == X509_KEY_TYPE_RSA)
+   {
+      //Save public key type
+      keyPair->type = X509_KEY_TYPE_RSA;
+
+      //Initialize RSA public and private keys
+      rsaInitPublicKey(&keyPair->rsaPublicKey);
+      rsaInitPrivateKey(&keyPair->rsaPrivateKey);
+
+      //Decode the PEM file that contains the RSA public key
+      error = pemImportRsaPublicKey(&keyPair->rsaPublicKey, publicKey,
+         publicKeyLen);
+
+      //Check status code
+      if(!error)
       {
-         //Save public key type
-         keyPair->type = X509_KEY_TYPE_RSA;
-
-         //Initialize RSA public and private keys
-         rsaInitPublicKey(&keyPair->rsaPublicKey);
-         rsaInitPrivateKey(&keyPair->rsaPrivateKey);
-
-         //Decode the PEM file that contains the RSA public key
-         error = pemImportRsaPublicKey(publicKey, publicKeyLen,
-            &keyPair->rsaPublicKey);
-
-         //Check status code
-         if(!error)
-         {
-            //Decode the PEM file that contains the RSA private key
-            error = pemImportRsaPrivateKey(privateKey, privateKeyLen,
-               NULL, &keyPair->rsaPrivateKey);
-         }
-
-         //Check status code
-         if(!error)
-         {
-            //Select RSA keys
-            keyPair->publicKey = &keyPair->rsaPublicKey;
-            keyPair->privateKey = &keyPair->rsaPrivateKey;
-
-            //Select the relevant signature algorithm
-            osStrcpy(keyPair->alg, "RS256");
-            osStrcpy(keyPair->crv, "");
-         }
+         //Decode the PEM file that contains the RSA private key
+         error = pemImportRsaPrivateKey(&keyPair->rsaPrivateKey, privateKey,
+            privateKeyLen, password);
       }
-      else
-#endif
-#if (ACME_CLIENT_ECDSA_SUPPORT == ENABLED)
-      //Valid EC key pair?
-      if(publicKeyType == X509_KEY_TYPE_EC &&
-         privateKeyType == X509_KEY_TYPE_EC)
+
+      //Check status code
+      if(!error)
       {
-         //Save public key type
-         keyPair->type = X509_KEY_TYPE_EC;
-
-         //Initialize EC domain parameters
-         ecInitDomainParameters(&keyPair->ecParams);
-
-         //Initialize EC public and private keys
-         ecInitPublicKey(&keyPair->ecPublicKey);
-         ecInitPrivateKey(&keyPair->ecPrivateKey);
-
-         //Decode the PEM file that contains the EC domain parameters
-         error = pemImportEcParameters(publicKey, publicKeyLen,
-            &keyPair->ecParams);
-
-         //Check status code
-         if(!error)
-         {
-            //Decode the PEM file that contains the EC public key
-            error = pemImportEcPublicKey(publicKey, publicKeyLen,
-               &keyPair->ecPublicKey);
-         }
-
-         //Check status code
-         if(!error)
-         {
-            //Decode the PEM file that contains the EC private key
-            error = pemImportEcPrivateKey(privateKey, privateKeyLen,
-               NULL, &keyPair->ecPrivateKey);
-         }
-
-         //Check status code
-         if(!error)
-         {
-            //Select EC keys
-            keyPair->publicKey = &keyPair->ecPublicKey;
-            keyPair->privateKey = &keyPair->ecPrivateKey;
-
-            //Select the relevant signature algorithm
-            if(osStrcmp(keyPair->ecParams.name, "secp256r1") == 0)
-            {
-               //ECDSA using P-256 and SHA-256
-               osStrcpy(keyPair->alg, "ES256");
-               osStrcpy(keyPair->crv, "P-256");
-            }
-            else if(osStrcmp(keyPair->ecParams.name, "secp384r1") == 0)
-            {
-               //ECDSA using P-384 and SHA-384
-               osStrcpy(keyPair->alg, "ES384");
-               osStrcpy(keyPair->crv, "P-384");
-            }
-            else if(osStrcmp(keyPair->ecParams.name, "secp521r1") == 0)
-            {
-               //ECDSA using P-521 and SHA-512
-               osStrcpy(keyPair->alg, "ES512");
-               osStrcpy(keyPair->crv, "P-521");
-            }
-            else
-            {
-               //Report an error
-               error = ERROR_INVALID_KEY;
-            }
-         }
-      }
-      else
-#endif
-#if (ACME_CLIENT_ED25519_SUPPORT == ENABLED)
-      //Valid Ed25519 key pair?
-      if(publicKeyType == X509_KEY_TYPE_ED25519 &&
-         privateKeyType == X509_KEY_TYPE_ED25519)
-      {
-         //Save public key type
-         keyPair->type = X509_KEY_TYPE_ED25519;
-
-         //Initialize EdDSA public and private keys
-         eddsaInitPublicKey(&keyPair->eddsaPublicKey);
-         eddsaInitPrivateKey(&keyPair->eddsaPrivateKey);
-
-         //Decode the PEM file that contains the EdDSA public key
-         error = pemImportEddsaPublicKey(publicKey, publicKeyLen,
-            &keyPair->eddsaPublicKey);
-
-         //Check status code
-         if(!error)
-         {
-            //Decode the PEM file that contains the EdDSA private key
-            error = pemImportEddsaPrivateKey(privateKey, privateKeyLen,
-               NULL, &keyPair->eddsaPrivateKey);
-         }
-
-         //Check status code
-         if(!error)
-         {
-            //Select EdDSA keys
-            keyPair->publicKey = &keyPair->eddsaPublicKey;
-            keyPair->privateKey = &keyPair->eddsaPrivateKey;
-
-            //Select the relevant signature algorithm
-            osStrcpy(keyPair->alg, "EdDSA");
-            osStrcpy(keyPair->crv, "Ed25519");
-         }
-      }
-      else
-#endif
-#if (ACME_CLIENT_ED448_SUPPORT == ENABLED)
-      //Valid Ed448 key pair?
-      if(publicKeyType == X509_KEY_TYPE_ED448 &&
-         privateKeyType == X509_KEY_TYPE_ED448)
-      {
-         //Save public key type
-         keyPair->type = X509_KEY_TYPE_ED448;
+         //Select RSA keys
+         keyPair->publicKey = &keyPair->rsaPublicKey;
+         keyPair->privateKey = &keyPair->rsaPrivateKey;
 
          //Select the relevant signature algorithm
-         osStrcpy(keyPair->alg, "EdDSA");
-         osStrcpy(keyPair->crv, "Ed448");
+         osStrcpy(keyPair->alg, "RS256");
+      }
+   }
+   else
+#endif
+#if (ACME_CLIENT_ECDSA_SUPPORT == ENABLED)
+   //EC public key?
+   if(type == X509_KEY_TYPE_EC)
+   {
+      //Save public key type
+      keyPair->type = X509_KEY_TYPE_EC;
 
-         //Initialize EdDSA public and private keys
-         eddsaInitPublicKey(&keyPair->eddsaPublicKey);
-         eddsaInitPrivateKey(&keyPair->eddsaPrivateKey);
+      //Initialize EC public and private keys
+      ecInitPublicKey(&keyPair->ecPublicKey);
+      ecInitPrivateKey(&keyPair->ecPrivateKey);
 
-         //Decode the PEM file that contains the EdDSA public key
-         error = pemImportEddsaPublicKey(publicKey, publicKeyLen,
-            &keyPair->eddsaPublicKey);
+      //Decode the PEM file that contains the EC public key
+      error = pemImportEcPublicKey(&keyPair->ecPublicKey, publicKey,
+         publicKeyLen);
 
-         //Check status code
-         if(!error)
+      //Check status code
+      if(!error)
+      {
+         //Decode the PEM file that contains the EC private key
+         error = pemImportEcPrivateKey(&keyPair->ecPrivateKey, privateKey,
+            privateKeyLen, password);
+      }
+
+      //Check status code
+      if(!error)
+      {
+         //Select EC keys
+         keyPair->publicKey = &keyPair->ecPublicKey;
+         keyPair->privateKey = &keyPair->ecPrivateKey;
+
+         //Select the relevant signature algorithm
+         if(osStrcmp(keyPair->ecPublicKey.curve->name, "secp256r1") == 0 &&
+            osStrcmp(keyPair->ecPrivateKey.curve->name, "secp256r1") == 0)
          {
-            //Decode the PEM file that contains the EdDSA private key
-            error = pemImportEddsaPrivateKey(privateKey, privateKeyLen,
-               NULL, &keyPair->eddsaPrivateKey);
+            //ECDSA using P-256 and SHA-256
+            osStrcpy(keyPair->alg, "ES256");
          }
+         else if(osStrcmp(keyPair->ecPublicKey.curve->name, "secp384r1") == 0 &&
+            osStrcmp(keyPair->ecPrivateKey.curve->name, "secp384r1") == 0)
+         {
+            //ECDSA using P-384 and SHA-384
+            osStrcpy(keyPair->alg, "ES384");
+         }
+         else if(osStrcmp(keyPair->ecPublicKey.curve->name, "secp521r1") == 0 &&
+            osStrcmp(keyPair->ecPrivateKey.curve->name, "secp521r1") == 0)
+         {
+            //ECDSA using P-521 and SHA-512
+            osStrcpy(keyPair->alg, "ES512");
+         }
+         else
+         {
+            //Report an error
+            error = ERROR_INVALID_KEY;
+         }
+      }
+   }
+   else
+#endif
+#if (ACME_CLIENT_ED25519_SUPPORT == ENABLED)
+   //Ed22519 public key?
+   if(type == X509_KEY_TYPE_ED25519)
+   {
+      //Save public key type
+      keyPair->type = X509_KEY_TYPE_ED25519;
 
-         //Check status code
-         if(!error)
+      //Initialize EdDSA public and private keys
+      eddsaInitPublicKey(&keyPair->eddsaPublicKey);
+      eddsaInitPrivateKey(&keyPair->eddsaPrivateKey);
+
+      //Decode the PEM file that contains the EdDSA public key
+      error = pemImportEddsaPublicKey(&keyPair->eddsaPublicKey, publicKey,
+         publicKeyLen);
+
+      //Check status code
+      if(!error)
+      {
+         //Decode the PEM file that contains the EdDSA private key
+         error = pemImportEddsaPrivateKey(&keyPair->eddsaPrivateKey,
+            privateKey, privateKeyLen, password);
+      }
+
+      //Check status code
+      if(!error)
+      {
+         //Valid Ed25519 key pair?
+         if(keyPair->eddsaPublicKey.curve == ED25519_CURVE &&
+            keyPair->eddsaPrivateKey.curve == ED25519_CURVE)
          {
             //Select EdDSA keys
             keyPair->publicKey = &keyPair->eddsaPublicKey;
@@ -259,16 +203,293 @@ error_t acmeClientLoadKeyPair(AcmeKeyPair *keyPair, const char_t *publicKey,
 
             //Select the relevant signature algorithm
             osStrcpy(keyPair->alg, "EdDSA");
-            osStrcpy(keyPair->crv, "Ed448");
+         }
+         else
+         {
+            //Report an error
+            error = ERROR_INVALID_KEY;
          }
       }
-      else
+   }
+   else
 #endif
-      //Invalid key pair?
+#if (ACME_CLIENT_ED448_SUPPORT == ENABLED)
+   //Ed448 public key?
+   if(type == X509_KEY_TYPE_ED448)
+   {
+      //Save public key type
+      keyPair->type = X509_KEY_TYPE_ED448;
+
+      //Initialize EdDSA public and private keys
+      eddsaInitPublicKey(&keyPair->eddsaPublicKey);
+      eddsaInitPrivateKey(&keyPair->eddsaPrivateKey);
+
+      //Decode the PEM file that contains the EdDSA public key
+      error = pemImportEddsaPublicKey(&keyPair->eddsaPublicKey, publicKey,
+         publicKeyLen);
+
+      //Check status code
+      if(!error)
       {
-         //The supplied public/private key pair is not valid
-         error = ERROR_INVALID_KEY;
+         //Decode the PEM file that contains the EdDSA private key
+         error = pemImportEddsaPrivateKey(&keyPair->eddsaPrivateKey,
+            privateKey, privateKeyLen, password);
       }
+
+      //Check status code
+      if(!error)
+      {
+         //Valid Ed448 key pair?
+         if(keyPair->eddsaPublicKey.curve == ED448_CURVE &&
+            keyPair->eddsaPrivateKey.curve == ED448_CURVE)
+         {
+            //Select EdDSA keys
+            keyPair->publicKey = &keyPair->eddsaPublicKey;
+            keyPair->privateKey = &keyPair->eddsaPrivateKey;
+
+            //Select the relevant signature algorithm
+            osStrcpy(keyPair->alg, "EdDSA");
+         }
+         else
+         {
+            //Report an error
+            error = ERROR_INVALID_KEY;
+         }
+      }
+   }
+   else
+#endif
+   //Invalid public key?
+   {
+      //The supplied public key is not valid
+      error = ERROR_INVALID_KEY;
+   }
+
+   //Any error to report?
+   if(error)
+   {
+      //Clean up side effects
+      acmeClientUnloadKeyPair(keyPair);
+   }
+
+   //Return status code
+   return error;
+}
+
+
+/**
+ * @brief Load certificate/private key pair
+ * @param[in] keyPair Pointer to the key pair
+ * @param[in] cert Certificate (PEM format)
+ * @param[in] certLen Length of the certificate
+ * @param[in] privateKey Private key (PEM format)
+ * @param[in] privateKeyLen Length of the private key
+ * @param[in] password NULL-terminated string containing the password. This
+ *   parameter is required if the private key is encrypted
+ * @return Error code
+ **/
+
+error_t acmeClientLoadCertKeyPair(AcmeKeyPair *keyPair, const char_t *cert,
+   size_t certLen, const char_t *privateKey, size_t privateKeyLen,
+   const char_t *password)
+{
+   error_t error;
+   X509KeyType type;
+
+   //Clear key pair
+   osMemset(keyPair, 0, sizeof(AcmeKeyPair));
+
+   //Extract the type of the public key contained in the certificate
+   type = pemGetCertPublicKeyType(cert, certLen);
+
+#if (ACME_CLIENT_RSA_SUPPORT == ENABLED)
+   //RSA public key?
+   if(type == X509_KEY_TYPE_RSA)
+   {
+      //Save public key type
+      keyPair->type = X509_KEY_TYPE_RSA;
+
+      //Initialize RSA public and private keys
+      rsaInitPublicKey(&keyPair->rsaPublicKey);
+      rsaInitPrivateKey(&keyPair->rsaPrivateKey);
+
+      //Extract the RSA public key from the certificate
+      error = pemImportRsaCertPublicKey(&keyPair->rsaPublicKey, cert, certLen);
+
+      //Check status code
+      if(!error)
+      {
+         //Decode the PEM file that contains the RSA private key
+         error = pemImportRsaPrivateKey(&keyPair->rsaPrivateKey, privateKey,
+            privateKeyLen, password);
+      }
+
+      //Check status code
+      if(!error)
+      {
+         //Select RSA keys
+         keyPair->publicKey = &keyPair->rsaPublicKey;
+         keyPair->privateKey = &keyPair->rsaPrivateKey;
+
+         //Select the relevant signature algorithm
+         osStrcpy(keyPair->alg, "RS256");
+      }
+   }
+   else
+#endif
+#if (ACME_CLIENT_ECDSA_SUPPORT == ENABLED)
+   //EC public key?
+   if(type == X509_KEY_TYPE_EC)
+   {
+      //Save public key type
+      keyPair->type = X509_KEY_TYPE_EC;
+
+      //Initialize EC public and private keys
+      ecInitPublicKey(&keyPair->ecPublicKey);
+      ecInitPrivateKey(&keyPair->ecPrivateKey);
+
+      //Extract the EC public key from the certificate
+      error = pemImportEcCertPublicKey(&keyPair->ecPublicKey, cert, certLen);
+
+      //Check status code
+      if(!error)
+      {
+         //Decode the PEM file that contains the EC private key
+         error = pemImportEcPrivateKey(&keyPair->ecPrivateKey, privateKey,
+            privateKeyLen, password);
+      }
+
+      //Check status code
+      if(!error)
+      {
+         //Select EC keys
+         keyPair->publicKey = &keyPair->ecPublicKey;
+         keyPair->privateKey = &keyPair->ecPrivateKey;
+
+         //Select the relevant signature algorithm
+         if(osStrcmp(keyPair->ecPublicKey.curve->name, "secp256r1") == 0 &&
+            osStrcmp(keyPair->ecPrivateKey.curve->name, "secp256r1") == 0)
+         {
+            //ECDSA using P-256 and SHA-256
+            osStrcpy(keyPair->alg, "ES256");
+         }
+         else if(osStrcmp(keyPair->ecPublicKey.curve->name, "secp384r1") == 0 &&
+            osStrcmp(keyPair->ecPrivateKey.curve->name, "secp384r1") == 0)
+         {
+            //ECDSA using P-384 and SHA-384
+            osStrcpy(keyPair->alg, "ES384");
+         }
+         else if(osStrcmp(keyPair->ecPublicKey.curve->name, "secp521r1") == 0 &&
+            osStrcmp(keyPair->ecPrivateKey.curve->name, "secp521r1") == 0)
+         {
+            //ECDSA using P-521 and SHA-512
+            osStrcpy(keyPair->alg, "ES512");
+         }
+         else
+         {
+            //Report an error
+            error = ERROR_INVALID_KEY;
+         }
+      }
+   }
+   else
+#endif
+#if (ACME_CLIENT_ED25519_SUPPORT == ENABLED)
+   //Ed22519 public key?
+   if(type == X509_KEY_TYPE_ED25519)
+   {
+      //Save public key type
+      keyPair->type = X509_KEY_TYPE_ED25519;
+
+      //Initialize EdDSA public and private keys
+      eddsaInitPublicKey(&keyPair->eddsaPublicKey);
+      eddsaInitPrivateKey(&keyPair->eddsaPrivateKey);
+
+      //Extract the EdDSA public key from the certificate
+      error = pemImportEddsaCertPublicKey(&keyPair->eddsaPublicKey, cert,
+         certLen);
+
+      //Check status code
+      if(!error)
+      {
+         //Decode the PEM file that contains the EdDSA private key
+         error = pemImportEddsaPrivateKey(&keyPair->eddsaPrivateKey,
+            privateKey, privateKeyLen, password);
+      }
+
+      //Check status code
+      if(!error)
+      {
+         //Valid Ed25519 key pair?
+         if(keyPair->eddsaPublicKey.curve == ED25519_CURVE &&
+            keyPair->eddsaPrivateKey.curve == ED25519_CURVE)
+         {
+            //Select EdDSA keys
+            keyPair->publicKey = &keyPair->eddsaPublicKey;
+            keyPair->privateKey = &keyPair->eddsaPrivateKey;
+
+            //Select the relevant signature algorithm
+            osStrcpy(keyPair->alg, "EdDSA");
+         }
+         else
+         {
+            //Report an error
+            error = ERROR_INVALID_KEY;
+         }
+      }
+   }
+   else
+#endif
+#if (ACME_CLIENT_ED448_SUPPORT == ENABLED)
+   //Ed448 public key?
+   if(type == X509_KEY_TYPE_ED448)
+   {
+      //Save public key type
+      keyPair->type = X509_KEY_TYPE_ED448;
+
+      //Initialize EdDSA public and private keys
+      eddsaInitPublicKey(&keyPair->eddsaPublicKey);
+      eddsaInitPrivateKey(&keyPair->eddsaPrivateKey);
+
+      //Extract the EdDSA public key from the certificate
+      error = pemImportEddsaCertPublicKey(&keyPair->eddsaPublicKey, cert,
+         certLen);
+
+      //Check status code
+      if(!error)
+      {
+         //Decode the PEM file that contains the EdDSA private key
+         error = pemImportEddsaPrivateKey(&keyPair->eddsaPrivateKey,
+            privateKey, privateKeyLen, password);
+      }
+
+      //Check status code
+      if(!error)
+      {
+         //Valid Ed448 key pair?
+         if(keyPair->eddsaPublicKey.curve == ED448_CURVE &&
+            keyPair->eddsaPrivateKey.curve == ED448_CURVE)
+         {
+            //Select EdDSA keys
+            keyPair->publicKey = &keyPair->eddsaPublicKey;
+            keyPair->privateKey = &keyPair->eddsaPrivateKey;
+
+            //Select the relevant signature algorithm
+            osStrcpy(keyPair->alg, "EdDSA");
+         }
+         else
+         {
+            //Report an error
+            error = ERROR_INVALID_KEY;
+         }
+      }
+   }
+   else
+#endif
+   //Invalid public key?
+   {
+      //The supplied public key is not valid
+      error = ERROR_INVALID_KEY;
    }
 
    //Any error to report?
@@ -304,9 +525,6 @@ void acmeClientUnloadKeyPair(AcmeKeyPair *keyPair)
    //EC key pair?
    if(keyPair->type == X509_KEY_TYPE_EC)
    {
-      //Release EC domain parameters
-      ecFreeDomainParameters(&keyPair->ecParams);
-
       //Release EC public and private keys
       ecFreePublicKey(&keyPair->ecPublicKey);
       ecFreePrivateKey(&keyPair->ecPrivateKey);
@@ -789,8 +1007,8 @@ error_t acmeClientFormatJwk(const AcmeKeyPair *keyPair, char_t *buffer,
    if(keyPair->type == X509_KEY_TYPE_EC)
    {
       //Export the EC public key to JWK format
-      error = jwkExportEcPublicKey(&keyPair->ecParams, &keyPair->ecPublicKey,
-         buffer, written, sort);
+      error = jwkExportEcPublicKey(&keyPair->ecPublicKey, buffer, written,
+         sort);
    }
    else
 #endif
@@ -801,8 +1019,8 @@ error_t acmeClientFormatJwk(const AcmeKeyPair *keyPair, char_t *buffer,
       keyPair->type == X509_KEY_TYPE_ED448)
    {
       //Export the EdDSA public key to JWK format
-      error = jwkExportEddsaPublicKey(keyPair->crv, &keyPair->eddsaPublicKey,
-         buffer, written, sort);
+      error = jwkExportEddsaPublicKey(&keyPair->eddsaPublicKey, buffer,
+         written, sort);
    }
    else
 #endif
@@ -887,40 +1105,31 @@ error_t acmeClientGenerateCsr(AcmeClientContext *context, uint8_t *buffer,
       //EC key pair?
       if(context->certKey.type == X509_KEY_TYPE_EC)
       {
-         X509EcParameters *ecParams;
+         X509OctetString *namedCurve;
 
          //Set public key identifier
          certReqInfo->subjectPublicKeyInfo.oid.value = EC_PUBLIC_KEY_OID;
          certReqInfo->subjectPublicKeyInfo.oid.length = sizeof(EC_PUBLIC_KEY_OID);
 
-         //Point to the EC domain parameters
-         ecParams = &certReqInfo->subjectPublicKeyInfo.ecParams;
+         //Select the signature algorithm
+         signatureAlgo.oid.value = ECDSA_WITH_SHA256_OID;
+         signatureAlgo.oid.length = sizeof(ECDSA_WITH_SHA256_OID);
 
-         //Select the relevant elliptic curve
-         if(osStrcmp(context->certKey.ecParams.name, "secp256r1") == 0)
+         //Point to the named curve
+         namedCurve = &certReqInfo->subjectPublicKeyInfo.ecParams.namedCurve;
+
+         //Valid elliptic curve?
+         if(context->certKey.ecPublicKey.curve != NULL)
          {
-            ecParams->namedCurve.value = SECP256R1_OID;
-            ecParams->namedCurve.length = sizeof(SECP256R1_OID);
-         }
-         else if(osStrcmp(context->certKey.ecParams.name, "secp384r1") == 0)
-         {
-            ecParams->namedCurve.value = SECP384R1_OID;
-            ecParams->namedCurve.length = sizeof(SECP384R1_OID);
-         }
-         else if(osStrcmp(context->certKey.ecParams.name, "secp521r1") == 0)
-         {
-            ecParams->namedCurve.value = SECP521R1_OID;
-            ecParams->namedCurve.length = sizeof(SECP521R1_OID);
+            //Select the relevant named curve
+            namedCurve->value = context->certKey.ecPublicKey.curve->oid;
+            namedCurve->length = context->certKey.ecPublicKey.curve->oidSize;
          }
          else
          {
             //Report an error
             error = ERROR_INVALID_KEY;
          }
-
-         //Select the signature algorithm
-         signatureAlgo.oid.value = ECDSA_WITH_SHA256_OID;
-         signatureAlgo.oid.length = sizeof(ECDSA_WITH_SHA256_OID);
       }
       else
 #endif

@@ -6,7 +6,7 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  *
- * Copyright (C) 2019-2024 Oryx Embedded SARL. All rights reserved.
+ * Copyright (C) 2019-2025 Oryx Embedded SARL. All rights reserved.
  *
  * This file is part of CycloneACME Open.
  *
@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.4.4
+ * @version 2.5.0
  **/
 
 //Switch to the appropriate trace level
@@ -169,8 +169,8 @@ error_t acmeClientFormatChallengeReadyRequest(AcmeClientContext *context,
    {
       //Generate the JSON Web Signature
       error = jwsCreate(context->prngAlgo, context->prngContext, protected,
-         payload, context->accountKey.alg, context->accountKey.crv,
-         context->accountKey.privateKey, context->buffer, &context->bufferLen);
+         payload, context->accountKey.alg, context->accountKey.privateKey,
+         context->buffer, &context->bufferLen);
    }
 
    //Return status code
@@ -504,40 +504,31 @@ error_t acmeClientGenerateTlsAlpnCert(AcmeClientContext *context,
          //EC key pair?
          if(context->certKey.type == X509_KEY_TYPE_EC)
          {
-            X509EcParameters *ecParams;
+            X509OctetString *namedCurve;
 
             //Set public key identifier
             certReqInfo->subjectPublicKeyInfo.oid.value = EC_PUBLIC_KEY_OID;
             certReqInfo->subjectPublicKeyInfo.oid.length = sizeof(EC_PUBLIC_KEY_OID);
 
-            //Point to the EC domain parameters
-            ecParams = &certReqInfo->subjectPublicKeyInfo.ecParams;
+            //Select the signature algorithm
+            signatureAlgo.oid.value = ECDSA_WITH_SHA256_OID;
+            signatureAlgo.oid.length = sizeof(ECDSA_WITH_SHA256_OID);
 
-            //Select the relevant elliptic curve
-            if(osStrcmp(context->certKey.ecParams.name, "secp256r1") == 0)
+            //Point to the named curve
+            namedCurve = &certReqInfo->subjectPublicKeyInfo.ecParams.namedCurve;
+
+            //Valid elliptic curve?
+            if(context->certKey.ecPublicKey.curve != NULL)
             {
-               ecParams->namedCurve.value = SECP256R1_OID;
-               ecParams->namedCurve.length = sizeof(SECP256R1_OID);
-            }
-            else if(osStrcmp(context->certKey.ecParams.name, "secp384r1") == 0)
-            {
-               ecParams->namedCurve.value = SECP384R1_OID;
-               ecParams->namedCurve.length = sizeof(SECP384R1_OID);
-            }
-            else if(osStrcmp(context->certKey.ecParams.name, "secp521r1") == 0)
-            {
-               ecParams->namedCurve.value = SECP521R1_OID;
-               ecParams->namedCurve.length = sizeof(SECP521R1_OID);
+               //Select the relevant named curve
+               namedCurve->value = context->certKey.ecPublicKey.curve->oid;
+               namedCurve->length = context->certKey.ecPublicKey.curve->oidSize;
             }
             else
             {
                //Report an error
                error = ERROR_INVALID_KEY;
             }
-
-            //Select the signature algorithm
-            signatureAlgo.oid.value = ECDSA_WITH_SHA256_OID;
-            signatureAlgo.oid.length = sizeof(ECDSA_WITH_SHA256_OID);
          }
          else
 #endif
@@ -580,13 +571,13 @@ error_t acmeClientGenerateTlsAlpnCert(AcmeClientContext *context,
       if(!error)
       {
          //Validity period
-         validity.notBefore.year = 2018;
+         validity.notBefore.year = 2020;
          validity.notBefore.month = 1;
          validity.notBefore.day = 1;
          validity.notBefore.hours = 12;
          validity.notBefore.minutes = 0;
          validity.notBefore.seconds = 0;
-         validity.notAfter.year = 2019;
+         validity.notAfter.year = 2021;
          validity.notAfter.month = 1;
          validity.notAfter.day = 1;
          validity.notAfter.hours = 12;

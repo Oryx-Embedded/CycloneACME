@@ -6,7 +6,7 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  *
- * Copyright (C) 2019-2024 Oryx Embedded SARL. All rights reserved.
+ * Copyright (C) 2019-2025 Oryx Embedded SARL. All rights reserved.
  *
  * This file is part of CycloneACME Open.
  *
@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.4.4
+ * @version 2.5.0
  **/
 
 //Switch to the appropriate trace level
@@ -55,6 +55,7 @@
 error_t jwkExportRsaPublicKey(const RsaPublicKey *publicKey, char_t *buffer,
    size_t *written, bool_t sort)
 {
+#if (ACME_CLIENT_RSA_SUPPORT == ENABLED)
    error_t error;
    int_t ret;
    size_t n;
@@ -155,12 +156,15 @@ error_t jwkExportRsaPublicKey(const RsaPublicKey *publicKey, char_t *buffer,
 
    //Return status code
    return error;
+#else
+   //Not implemented
+   return ERROR_NOT_IMPLEMENTED;
+#endif
 }
 
 
 /**
  * @brief Export an EC public key to JWK format
- * @param[in] params EC domain parameters
  * @param[in] publicKey EC public key
  * @param[out] buffer Output buffer where to store the JSON representation
  * @param[out] written Length of the resulting JSON representation
@@ -168,9 +172,10 @@ error_t jwkExportRsaPublicKey(const RsaPublicKey *publicKey, char_t *buffer,
  * @return Error code
  **/
 
-error_t jwkExportEcPublicKey(const EcDomainParameters *params,
-   const EcPublicKey *publicKey, char_t *buffer, size_t *written, bool_t sort)
+error_t jwkExportEcPublicKey(const EcPublicKey *publicKey, char_t *buffer,
+   size_t *written, bool_t sort)
 {
+#if (ACME_CLIENT_ECDSA_SUPPORT == ENABLED)
    error_t error;
    int_t ret;
    size_t n;
@@ -192,6 +197,10 @@ error_t jwkExportEcPublicKey(const EcDomainParameters *params,
    //Start of exception handling block
    do
    {
+      //Invalid elliptic curve?
+      if(publicKey->curve == NULL)
+         break;
+
       //The "kty" (key type) parameter identifies the cryptographic algorithm
       //family used with the key (refer to RFC 7517, section 4.1)
       ret = json_object_set_new(rootObj, "kty", json_string("EC"));
@@ -201,17 +210,17 @@ error_t jwkExportEcPublicKey(const EcDomainParameters *params,
 
       //The "crv" (curve) parameter identifies the cryptographic curve used
       //with the key (refer to RFC 7518, section 6.2.1.1)
-      if(osStrcmp(params->name, "secp256r1") == 0)
+      if(osStrcmp(publicKey->curve->name, "secp256r1") == 0)
       {
          //Select NIST P-256 elliptic curve
          crv = "P-256";
       }
-      else if(osStrcmp(params->name, "secp384r1") == 0)
+      else if(osStrcmp(publicKey->curve->name, "secp384r1") == 0)
       {
          //Select NIST P-384 elliptic curve
          crv = "P-384";
       }
-      else if(osStrcmp(params->name, "secp521r1") == 0)
+      else if(osStrcmp(publicKey->curve->name, "secp521r1") == 0)
       {
          //Select NIST P-521 elliptic curve
          crv = "P-521";
@@ -219,7 +228,6 @@ error_t jwkExportEcPublicKey(const EcDomainParameters *params,
       else
       {
          //Report an error
-         error = ERROR_WRONG_IDENTIFIER;
          break;
       }
 
@@ -232,11 +240,8 @@ error_t jwkExportEcPublicKey(const EcDomainParameters *params,
       //The length of the "x" octet string must be the full size of the
       //x-coordinate for the curve specified in the "crv" parameter (refer
       //to RFC 7518, section 6.2.1.2)
-      n = mpiGetByteLength(&params->p);
-
-      //Convert the x-coordinate to an octet string
-      error = mpiExport(&publicKey->q.x, (uint8_t *) buffer, n,
-         MPI_FORMAT_BIG_ENDIAN);
+      error = ecExportPublicKey(publicKey, (uint8_t *) buffer, &n,
+         EC_PUBLIC_KEY_FORMAT_RAW_X);
       //Any error to report?
       if(error)
          break;
@@ -254,11 +259,8 @@ error_t jwkExportEcPublicKey(const EcDomainParameters *params,
       //The length of the "y" octet string must be the full size of the
       //y-coordinate for the curve specified in the "crv" parameter (refer
       //to RFC 7518, section 6.2.1.3)
-      n = mpiGetByteLength(&params->p);
-
-      //Convert the y-coordinate to an octet string
-      error = mpiExport(&publicKey->q.y, (uint8_t *) buffer, n,
-         MPI_FORMAT_BIG_ENDIAN);
+      error = ecExportPublicKey(publicKey, (uint8_t *) buffer, &n,
+         EC_PUBLIC_KEY_FORMAT_RAW_Y);
       //Any error to report?
       if(error)
          break;
@@ -305,12 +307,15 @@ error_t jwkExportEcPublicKey(const EcDomainParameters *params,
 
    //Return status code
    return error;
+#else
+   //Not implemented
+   return ERROR_NOT_IMPLEMENTED;
+#endif
 }
 
 
 /**
  * @brief Export an EdDSA public key to JWK format
- * @param[in] crv Subtype of the key
  * @param[in] publicKey EdDSA public key
  * @param[out] buffer Output buffer where to store the JSON representation
  * @param[out] written Length of the resulting JSON representation
@@ -318,15 +323,17 @@ error_t jwkExportEcPublicKey(const EcDomainParameters *params,
  * @return Error code
  **/
 
-error_t jwkExportEddsaPublicKey(const char_t *crv,
-   const EddsaPublicKey *publicKey, char_t *buffer, size_t *written,
-   bool_t sort)
+error_t jwkExportEddsaPublicKey(const EddsaPublicKey *publicKey, char_t *buffer,
+   size_t *written, bool_t sort)
 {
+#if (ACME_CLIENT_ED25519_SUPPORT == ENABLED || \
+   ACME_CLIENT_ED448_SUPPORT == ENABLED)
    error_t error;
    int_t ret;
    size_t n;
    uint_t flags;
    char_t *s;
+   const char_t *crv;
    json_t *rootObj;
 
    //Initialize status code
@@ -342,6 +349,10 @@ error_t jwkExportEddsaPublicKey(const char_t *crv,
    //Start of exception handling block
    do
    {
+      //Invalid elliptic curve?
+      if(publicKey->curve == NULL)
+         break;
+
       //The parameter "kty" must be "OKP" (refer to RFC 8037, section 2)
       ret = json_object_set_new(rootObj, "kty", json_string("OKP"));
       //Any error to report?
@@ -349,32 +360,30 @@ error_t jwkExportEddsaPublicKey(const char_t *crv,
          break;
 
       //The parameter "crv" must be present and contain the subtype of the key
+      if(osStrcmp(publicKey->curve->name, "Ed25519") == 0)
+      {
+         //Select Ed25519 elliptic curve
+         crv = "Ed25519";
+      }
+      else if(osStrcmp(publicKey->curve->name, "Ed448") == 0)
+      {
+         //Select Ed448 elliptic curve
+         crv = "Ed448";
+      }
+      else
+      {
+         //Report an error
+         break;
+      }
+
+      //Format "crv" parameter
       ret |= json_object_set_new(rootObj, "crv", json_string(crv));
       //Any error to report?
       if(ret != 0)
          break;
 
-      //Retrieve the length of the public key
-      if(osStrcmp(crv, "Ed25519") == 0)
-      {
-         //The public key consists of 32 octets
-         n = 32;
-      }
-      else if(osStrcmp(crv, "Ed448") == 0)
-      {
-         //The public key consists of 57 octets
-         n = 57;
-      }
-      else
-      {
-         //Report an error
-         error = ERROR_WRONG_IDENTIFIER;
-         break;
-      }
-
       //Convert the public key to an octet string
-      error = mpiExport(&publicKey->q, (uint8_t *) buffer, n,
-         MPI_FORMAT_BIG_ENDIAN);
+      error = eddsaExportPublicKey(publicKey, (uint8_t *) buffer, &n);
       //Any error to report?
       if(error)
          break;
@@ -421,6 +430,10 @@ error_t jwkExportEddsaPublicKey(const char_t *crv,
 
    //Return status code
    return error;
+#else
+   //Not implemented
+   return ERROR_NOT_IMPLEMENTED;
+#endif
 }
 
 
@@ -431,7 +444,6 @@ error_t jwkExportEddsaPublicKey(const char_t *crv,
  * @param[in] protected Pointer to the JWS protected header
  * @param[in] payload Pointer to the JWS payload
  * @param[in] alg Cryptographic algorithm used to secure the JWS
- * @param[in] crv Subtype of the key
  * @param[in] privateKey Pointer to the signer's private key
  * @param[out] buffer JSON structure representing the digitally signed
  *   or MACed message
@@ -441,7 +453,7 @@ error_t jwkExportEddsaPublicKey(const char_t *crv,
 
 error_t jwsCreate(const PrngAlgo *prngAlgo, void *prngContext,
    const char_t *protected, const char_t *payload, const char_t *alg,
-   const char_t *crv, const void *privateKey, char_t *buffer, size_t *written)
+   const void *privateKey, char_t *buffer, size_t *written)
 {
    error_t error;
    int_t ret;
@@ -507,8 +519,8 @@ error_t jwsCreate(const PrngAlgo *prngAlgo, void *prngContext,
       //Compute the JWS Signature in the manner defined for the particular
       //algorithm being used over the JWS signing input (refer to RFC 7515,
       //section 5.1)
-      error = jwsGenerateSignature(prngAlgo, prngContext, alg, crv,
-         privateKey, buffer, n, (uint8_t *) buffer, &n);
+      error = jwsGenerateSignature(prngAlgo, prngContext, alg, privateKey,
+         buffer, n, (uint8_t *) buffer, &n);
       //Any error to report?
       if(error)
          break;
@@ -563,7 +575,6 @@ error_t jwsCreate(const PrngAlgo *prngAlgo, void *prngContext,
  * @param[in] prngAlgo PRNG algorithm
  * @param[in] prngContext Pointer to the PRNG context
  * @param[in] alg Cryptographic algorithm used to secure the JWS
- * @param[in] crv Subtype of the key
  * @param[in] privateKey Pointer to the signer's private key
  * @param[in] input Pointer to the JWS signing input
  * @param[in] inputLen Length of the JWS signing input
@@ -573,8 +584,8 @@ error_t jwsCreate(const PrngAlgo *prngAlgo, void *prngContext,
  **/
 
 error_t jwsGenerateSignature(const PrngAlgo *prngAlgo, void *prngContext,
-   const char_t *alg, const char_t *crv, const void *privateKey,
-   const char_t *input, size_t inputLen, uint8_t *output, size_t *outputLen)
+   const char_t *alg, const void *privateKey, const char_t *input,
+   size_t inputLen, uint8_t *output, size_t *outputLen)
 {
    error_t error;
 
@@ -635,15 +646,10 @@ error_t jwsGenerateSignature(const PrngAlgo *prngAlgo, void *prngContext,
    if(osStrcmp(alg, "ES256") == 0 || osStrcmp(alg, "ES384") == 0 ||
       osStrcmp(alg, "ES512") == 0)
    {
-      size_t n;
       const HashAlgo *hashAlgo;
-      const EcCurveInfo *curveInfo;
-      EcDomainParameters params;
       EcdsaSignature signature;
       uint8_t digest[SHA512_DIGEST_SIZE];
 
-      //Initialize EC domain parameters
-      ecInitDomainParameters(&params);
       //Initialize ECDSA signature
       ecdsaInitSignature(&signature);
 
@@ -651,33 +657,29 @@ error_t jwsGenerateSignature(const PrngAlgo *prngAlgo, void *prngContext,
       if(osStrcmp(alg, "ES256") == 0)
       {
          //ECDSA algorithm using P-256 and SHA-256
-         curveInfo = SECP256R1_CURVE;
          hashAlgo = SHA256_HASH_ALGO;
       }
       else if(osStrcmp(alg, "ES384") == 0)
       {
          //ECDSA algorithm using P-384 and SHA-384
-         curveInfo = SECP384R1_CURVE;
          hashAlgo = SHA384_HASH_ALGO;
       }
       else if(osStrcmp(alg, "ES512") == 0)
       {
          //ECDSA algorithm using P-521 and SHA-512
-         curveInfo = SECP521R1_CURVE;
          hashAlgo = SHA512_HASH_ALGO;
       }
       else
       {
          //Just for sanity
-         curveInfo = NULL;
          hashAlgo = NULL;
       }
 
-      //Valid signature algorithm?
-      if(curveInfo != NULL && hashAlgo != NULL)
+      //Valid hash algorithm?
+      if(hashAlgo != NULL)
       {
-         //Load EC domain parameters
-         error = ecLoadDomainParameters(&params, curveInfo);
+         //Digest the JWS signing input
+         error = hashAlgo->compute(input, inputLen, digest);
       }
       else
       {
@@ -688,16 +690,9 @@ error_t jwsGenerateSignature(const PrngAlgo *prngAlgo, void *prngContext,
       //Check status code
       if(!error)
       {
-         //Digest the JWS signing input
-         error = hashAlgo->compute(input, inputLen, digest);
-      }
-
-      //Check status code
-      if(!error)
-      {
          //Generate ECDSA signature (R, S)
-         error = ecdsaGenerateSignature(prngAlgo, prngContext, &params,
-            privateKey, digest, hashAlgo->digestSize, &signature);
+         error = ecdsaGenerateSignature(prngAlgo, prngContext, privateKey,
+            digest, hashAlgo->digestSize, &signature);
       }
 
       //Check status code
@@ -706,87 +701,71 @@ error_t jwsGenerateSignature(const PrngAlgo *prngAlgo, void *prngContext,
          //Turn R and S into octet sequences in big-endian order, with each
          //array being be 32 octets long. The octet sequence representations
          //must not be shortened to omit any leading zero octets contained in
-         //the values (refer to RFC 7518, section 3.4)
-         n = mpiGetByteLength(&params.q);
-
-         //Convert R to an octet string
-         error = mpiExport(&signature.r, (uint8_t *) output, n,
-            MPI_FORMAT_BIG_ENDIAN);
-      }
-
-      //Check status code
-      if(!error)
-      {
-         //Convert S to an octet string
-         error = mpiExport(&signature.s, (uint8_t *) output + n, n,
-            MPI_FORMAT_BIG_ENDIAN);
-      }
-
-      //Check status code
-      if(!error)
-      {
-         //Concatenate the two octet sequences in the order R and then S.
-         //The resulting 64-octet sequence is the JWS signature value
-         *outputLen = 2 * n;
+         //the values. Concatenate the two octet sequences in the order R and
+         //then S. The resulting 64-octet sequence is the JWS signature value
+         //(refer to RFC 7518, section 3.4)
+         error = ecdsaExportSignature(&signature, (uint8_t *) output,
+            outputLen, ECDSA_SIGNATURE_FORMAT_RAW);
       }
 
       //Release previously allocated resources
-      ecFreeDomainParameters(&params);
       ecdsaFreeSignature(&signature);
    }
    else
 #endif
-#if (ACME_CLIENT_ED25519_SUPPORT == ENABLED)
-   //Ed25519 algorithm?
-   if(osStrcmp(alg, "EdDSA") == 0 && osStrcmp(crv, "Ed25519") == 0)
+#if (ACME_CLIENT_ED25519_SUPPORT == ENABLED || \
+   ACME_CLIENT_ED448_SUPPORT == ENABLED)
+   //EdDSA algorithm?
+   if(osStrcmp(alg, "EdDSA") == 0)
    {
+      const uint8_t *q;
       const EddsaPrivateKey *eddsaPrivateKey;
-      uint8_t d[ED25519_PRIVATE_KEY_LEN];
 
       //Point to the EdDSA private key
       eddsaPrivateKey = (const EddsaPrivateKey *) privateKey;
 
-      //Retrieve private key
-      error = mpiExport(&eddsaPrivateKey->d, d, ED25519_PRIVATE_KEY_LEN,
-         MPI_FORMAT_LITTLE_ENDIAN);
+      //The public key is optional
+      q = (eddsaPrivateKey->q.curve != NULL) ? eddsaPrivateKey->q.q : NULL;
 
-      //Check status code
-      if(!error)
+#if (ACME_CLIENT_ED25519_SUPPORT == ENABLED)
+      //Ed25519 curve?
+      if(eddsaPrivateKey->curve == ED25519_CURVE)
       {
          //Generate Ed25519 signature (PureEdDSA mode)
-         error = ed25519GenerateSignature(d, NULL, input, inputLen,
+         error = ed25519GenerateSignature(eddsaPrivateKey->d, q, input, inputLen,
             NULL, 0, 0, output);
-      }
 
-      //Length of the resulting EdDSA signature
-      *outputLen = ED25519_SIGNATURE_LEN;
-   }
-   else
+         //Check status code
+         if(!error)
+         {
+            //The Ed25519 signature consists of 32 octets
+            *outputLen = ED25519_SIGNATURE_LEN;
+         }
+      }
+      else
 #endif
 #if (ACME_CLIENT_ED448_SUPPORT == ENABLED)
-   //Ed448 algorithm?
-   if(osStrcmp(alg, "EdDSA") == 0 && osStrcmp(crv, "Ed448") == 0)
-   {
-      const EddsaPrivateKey *eddsaPrivateKey;
-      uint8_t d[ED448_PRIVATE_KEY_LEN];
-
-      //Point to the EdDSA private key
-      eddsaPrivateKey = (const EddsaPrivateKey *) privateKey;
-
-      //Retrieve private key
-      error = mpiExport(&eddsaPrivateKey->d, d, ED448_PRIVATE_KEY_LEN,
-         MPI_FORMAT_LITTLE_ENDIAN);
-
-      //Check status code
-      if(!error)
+      //Ed448 curve?
+      if(eddsaPrivateKey->curve == ED448_CURVE)
       {
          //Generate Ed448 signature (PureEdDSA mode)
-         error = ed448GenerateSignature(d, NULL, input, inputLen,
+         error = ed448GenerateSignature(eddsaPrivateKey->d, q, input, inputLen,
             NULL, 0, 0, output);
-      }
 
-      //Length of the resulting EdDSA signature
-      *outputLen = ED448_SIGNATURE_LEN;
+         //Check status code
+         if(!error)
+         {
+            //The Ed448 signature consists of 57 octets
+            *outputLen = ED448_SIGNATURE_LEN;
+         }
+      }
+      else
+#endif
+      //Unknown curve?
+      {
+         //Report an error
+         error = ERROR_INVALID_SIGNATURE_ALGO;
+      }
    }
    else
 #endif
