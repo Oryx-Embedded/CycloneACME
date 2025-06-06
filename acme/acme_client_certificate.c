@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.5.0
+ * @version 2.5.2
  **/
 
 //Switch to the appropriate trace level
@@ -49,7 +49,8 @@
 /**
  * @brief Send HTTP request (certificate URL)
  * @param[in] context Pointer to the ACME client context
- * @param[out] buffer Pointer to the buffer where to store the certificate chain
+ * @param[out] buffer Pointer to the buffer where to store the certificate
+ *   chain (optional parameter)
  * @param[in] size Size of the buffer, in bytes
  * @param[out] length Actual length of the certificate chain, in bytes
  * @return Error code
@@ -75,6 +76,9 @@ error_t acmeClientSendDownloadCertRequest(AcmeClientContext *context,
          TRACE_DEBUG("## DOWNLOAD CERTIFICATE #######################################################\r\n");
          TRACE_DEBUG("###############################################################################\r\n");
          TRACE_DEBUG("\r\n");
+
+         //Reset the length of the certificate chain
+         context->certChainLen = 0;
 
          //Update HTTP request state
          context->requestState = ACME_REQ_STATE_FORMAT_BODY;
@@ -110,15 +114,30 @@ error_t acmeClientSendDownloadCertRequest(AcmeClientContext *context,
          context->requestState == ACME_REQ_STATE_SEND_BODY ||
          context->requestState == ACME_REQ_STATE_RECEIVE_HEADER ||
          context->requestState == ACME_REQ_STATE_PARSE_HEADER ||
-         context->requestState == ACME_REQ_STATE_RECEIVE_BODY ||
          context->requestState == ACME_REQ_STATE_CLOSE_BODY)
       {
          //Perform HTTP request/response transaction
          error = acmeClientSendRequest(context);
       }
-      else if(context->requestState == ACME_REQ_STATE_PARSE_BODY)
+      else if(context->requestState == ACME_REQ_STATE_RECEIVE_BODY)
       {
-         //Parse the body of the HTTP response
+         //Check HTTP status code
+         if(HTTP_STATUS_CODE_2YZ(context->statusCode))
+         {
+            //Download the certificate chain
+            error = acmeClientReceiveDownloadCertResponse(context, buffer,
+               size, length);
+         }
+         else
+         {
+            //When the server responds with an error status, it should provide
+            //additional information using a problem document
+            error = acmeClientSendRequest(context);
+         }
+      }
+      else if(context->requestState == ACME_REQ_STATE_COMPLETE)
+      {
+         //Parse HTTP response
          error = acmeClientParseDownloadCertResponse(context, buffer, size,
             length);
 
@@ -177,9 +196,64 @@ error_t acmeClientFormatDownloadCertRequest(AcmeClientContext *context)
 
 
 /**
+ * @brief Receive HTTP response (certificate URL)
+ * @param[in] context Pointer to the ACME client context
+ * @param[out] buffer Pointer to the buffer where to store the certificate
+ *   chain (optional parameter)
+ * @param[in] size Size of the buffer, in bytes
+ * @param[out] length Actual length of the certificate chain, in bytes
+ * @return Error code
+ **/
+
+error_t acmeClientReceiveDownloadCertResponse(AcmeClientContext *context,
+   char_t *buffer, size_t size, size_t *length)
+{
+   error_t error;
+   size_t n;
+
+   //Check whether the buffer can hold more data
+   if(buffer != NULL && context->certChainLen < size)
+   {
+      //Receive certificate chain
+      error = httpClientReadBody(&context->httpClientContext,
+         buffer + context->certChainLen, size - context->certChainLen, &n, 0);
+   }
+   else
+   {
+      //Discard extra bytes
+      error = httpClientReadBody(&context->httpClientContext,
+         context->buffer, ACME_CLIENT_BUFFER_SIZE, &n, 0);
+   }
+
+   //Check status code
+   if(error == NO_ERROR)
+   {
+      //Ajust the length of the certificate chain
+      context->certChainLen += n;
+   }
+   else if(error == ERROR_END_OF_STREAM)
+   {
+      //The end of the response body has been reached
+      error = NO_ERROR;
+
+      //Update HTTP request state
+      context->requestState = ACME_REQ_STATE_CLOSE_BODY;
+   }
+   else
+   {
+      //Just for sanity
+   }
+
+   //Return status code
+   return error;
+}
+
+
+/**
  * @brief Parse HTTP response (certificate URL)
  * @param[in] context Pointer to the ACME client context
- * @param[out] buffer Pointer to the buffer where to store the certificate chain
+ * @param[out] buffer Pointer to the buffer where to store the certificate
+ *   chain (optional parameter)
  * @param[in] size Size of the buffer, in bytes
  * @param[out] length Actual length of the certificate chain, in bytes
  * @return Error code
@@ -190,9 +264,6 @@ error_t acmeClientParseDownloadCertResponse(AcmeClientContext *context,
 {
    error_t error;
    size_t n;
-
-   //Initialize variables
-   error = NO_ERROR;
 
    //Check HTTP status code
    if(!HTTP_STATUS_CODE_2YZ(context->statusCode))
@@ -207,29 +278,27 @@ error_t acmeClientParseDownloadCertResponse(AcmeClientContext *context,
    if(osStrcasecmp(context->contentType, "application/pem-certificate-chain") != 0)
       return ERROR_INVALID_RESPONSE;
 
-   //Check whether the body of the response is truncated
-   if(context->bufferLen >= ACME_CLIENT_BUFFER_SIZE)
-      return ERROR_RESPONSE_TOO_LARGE;
+   //Valid buffer?
+   if(buffer != NULL)
+   {
+      //Make sure the output buffer is large enough to hold the entire
+      //certificate chain
+      if(context->certChainLen > size)
+         return ERROR_BUFFER_OVERFLOW;
 
-   //The body must contain a valid PEM certificate chain
-   error = pemImportCertificate(context->buffer, context->bufferLen, NULL,
-      &n, NULL);
-   //Any error to report?
-   if(error)
-      return ERROR_INVALID_RESPONSE;
+      //The body must contain a valid PEM certificate chain
+      error = pemImportCertificate(buffer, context->certChainLen, NULL, &n,
+         NULL);
+      //Any error to report?
+      if(error)
+         return ERROR_INVALID_RESPONSE;
+   }
 
-   //Make sure the output buffer is large enough to hold the certificate
-   if(context->bufferLen > size)
-      return ERROR_BUFFER_OVERFLOW;
+   //Return the actual length of the certificate chain
+   *length = context->certChainLen;
 
-   //Copy certificate chain
-   osMemcpy(buffer, context->buffer, context->bufferLen);
-
-   //Return the length of the certificate chain
-   *length = context->bufferLen;
-
-   //Return status code
-   return error;
+   //Successful processing
+   return NO_ERROR;
 }
 
 
@@ -310,7 +379,7 @@ error_t acmeClientSendRevokeCertRequest(AcmeClientContext *context,
          //Perform HTTP request/response transaction
          error = acmeClientSendRequest(context);
       }
-      else if(context->requestState == ACME_REQ_STATE_PARSE_BODY)
+      else if(context->requestState == ACME_REQ_STATE_COMPLETE)
       {
          //Parse the body of the HTTP response
          error = acmeClientParseRevokeCertResponse(context);

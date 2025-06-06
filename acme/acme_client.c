@@ -38,7 +38,7 @@
  * - RFC 7638: JSON Web Key (JWK) Thumbprint
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.5.0
+ * @version 2.5.2
  **/
 
 //Switch to the appropriate trace level
@@ -123,19 +123,19 @@ error_t acmeClientRegisterTlsInitCallback(AcmeClientContext *context,
 /**
  * @brief Register CSR generation callback function
  * @param[in] context Pointer to the ACME client context
- * @param[in] callback TLS initialization callback function
+ * @param[in] callback CSR generation callback function
  * @return Error code
  **/
 
-error_t acmeClientRegisterCsrCallback(AcmeClientContext *context,
-   AcmeClientCsrCallback callback)
+error_t acmeClientRegisterCsrGenCallback(AcmeClientContext *context,
+   AcmeClientCsrGenCallback callback)
 {
    //Make sure the ACME client context is valid
    if(context == NULL)
       return ERROR_INVALID_PARAMETER;
 
    //Save callback function
-   context->csrCallback = callback;
+   context->csrGenCallback = callback;
 
    //Successful processing
    return NO_ERROR;
@@ -1449,7 +1449,8 @@ error_t acmeClientPollOrderStatus(AcmeClientContext *context,
 /**
  * @brief Download the certificate
  * @param[in] context Pointer to the ACME client context
- * @param[out] buffer Pointer to the buffer where to store the certificate chain
+ * @param[out] buffer Pointer to the buffer where to store the certificate
+ *   chain (optional parameter)
  * @param[in] size Size of the buffer, in bytes
  * @param[out] length Actual length of the certificate chain, in bytes
  * @return Error code
@@ -1461,7 +1462,7 @@ error_t acmeClientDownloadCertificate(AcmeClientContext *context,
    error_t error;
 
    //Check parameters
-   if(context == NULL || buffer == NULL || length == NULL)
+   if(context == NULL || length == NULL)
       return ERROR_INVALID_PARAMETER;
 
    //Initialize variables

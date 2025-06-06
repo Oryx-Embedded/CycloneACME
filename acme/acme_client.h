@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.5.0
+ * @version 2.5.2
  **/
 
 #ifndef _ACME_CLIENT_H
@@ -66,13 +66,13 @@
 #endif
 
 //Version string
-#define CYCLONE_ACME_VERSION_STRING "2.5.0"
+#define CYCLONE_ACME_VERSION_STRING "2.5.2"
 //Major version
 #define CYCLONE_ACME_MAJOR_VERSION 2
 //Minor version
 #define CYCLONE_ACME_MINOR_VERSION 5
 //Revision number
-#define CYCLONE_ACME_REV_NUMBER 0
+#define CYCLONE_ACME_REV_NUMBER 2
 
 //ACME client support
 #ifndef ACME_CLIENT_SUPPORT
@@ -163,7 +163,7 @@
 
 //Size of the buffer for input/output operations
 #ifndef ACME_CLIENT_BUFFER_SIZE
-   #define ACME_CLIENT_BUFFER_SIZE 6144
+   #define ACME_CLIENT_BUFFER_SIZE 3072
 #elif (ACME_CLIENT_BUFFER_SIZE < 2048)
    #error ACME_CLIENT_BUFFER_SIZE parameter is not valid
 #endif
@@ -198,7 +198,7 @@
 
 //Maximum length of nonces
 #ifndef ACME_CLIENT_MAX_NONCE_LEN
-   #define ACME_CLIENT_MAX_NONCE_LEN 64
+   #define ACME_CLIENT_MAX_NONCE_LEN 128
 #elif (ACME_CLIENT_MAX_NONCE_LEN < 1)
    #error ACME_CLIENT_MAX_NONCE_LEN parameter is not valid
 #endif
@@ -294,8 +294,8 @@ typedef enum
    ACME_REQ_STATE_RECEIVE_HEADER = 5,
    ACME_REQ_STATE_PARSE_HEADER   = 6,
    ACME_REQ_STATE_RECEIVE_BODY   = 7,
-   ACME_REQ_STATE_PARSE_BODY     = 8,
-   ACME_REQ_STATE_CLOSE_BODY     = 9,
+   ACME_REQ_STATE_CLOSE_BODY     = 8,
+   ACME_REQ_STATE_COMPLETE       = 9
 } AcmeRequestState;
 
 
@@ -401,7 +401,7 @@ typedef error_t (*AcmeClientTlsInitCallback)(HttpClientContext *context,
  * @brief CSR generation callback function
  **/
 
-typedef error_t (*AcmeClientCsrCallback)(AcmeClientContext *context,
+typedef error_t (*AcmeClientCsrGenCallback)(AcmeClientContext *context,
    uint8_t *buffer, size_t size, size_t *length);
 
 
@@ -572,7 +572,7 @@ struct _AcmeClientContext
    void *prngContext;                                         ///<Pseudo-random number generator context
    HttpClientContext httpClientContext;                       ///<HTTP client context
    AcmeClientTlsInitCallback tlsInitCallback;                 ///<TLS initialization callback function
-   AcmeClientCsrCallback csrCallback;                         ///<CSR generation callback function
+   AcmeClientCsrGenCallback csrGenCallback;                   ///<CSR generation callback function
    AcmeKeyPair accountKey;                                    ///<ACME account key
    AcmeKeyPair certKey;                                       ///<Certificate key
    char_t serverName[ACME_CLIENT_MAX_NAME_LEN + 1];           ///<Host name of the ACME server
@@ -596,6 +596,7 @@ struct _AcmeClientContext
    char_t contentType[ACME_CLIENT_MAX_CONTENT_TYPE_LEN + 1];  ///<Content type of the response
    char_t errorType[ACME_CLIENT_MAX_URN_LEN + 1];             ///<ACME error type
    uint_t badNonceErrors;                                     ///<Number of consecutive bad nonce errors
+   size_t certChainLen;                                       ///<Length of the certificate chain, in bytes
    ACME_CLIENT_PRIVATE_CONTEXT                                ///<Application specific context
 };
 
@@ -606,8 +607,8 @@ error_t acmeClientInit(AcmeClientContext *context);
 error_t acmeClientRegisterTlsInitCallback(AcmeClientContext *context,
    AcmeClientTlsInitCallback callback);
 
-error_t acmeClientRegisterCsrCallback(AcmeClientContext *context,
-   AcmeClientCsrCallback callback);
+error_t acmeClientRegisterCsrGenCallback(AcmeClientContext *context,
+   AcmeClientCsrGenCallback callback);
 
 error_t acmeClientSetPrng(AcmeClientContext *context, const PrngAlgo *prngAlgo,
    void *prngContext);

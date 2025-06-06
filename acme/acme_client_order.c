@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.5.0
+ * @version 2.5.2
  **/
 
 //Switch to the appropriate trace level
@@ -241,7 +241,7 @@ error_t acmeClientSendNewOrderRequest(AcmeClientContext *context,
          //Perform HTTP request/response transaction
          error = acmeClientSendRequest(context);
       }
-      else if(context->requestState == ACME_REQ_STATE_PARSE_BODY)
+      else if(context->requestState == ACME_REQ_STATE_COMPLETE)
       {
          //Parse the body of the HTTP response
          error = acmeClientParseNewOrderResponse(context);
@@ -618,7 +618,7 @@ error_t acmeClientSendOrderStatusRequest(AcmeClientContext *context)
          //Perform HTTP request/response transaction
          error = acmeClientSendRequest(context);
       }
-      else if(context->requestState == ACME_REQ_STATE_PARSE_BODY)
+      else if(context->requestState == ACME_REQ_STATE_COMPLETE)
       {
          //Parse the body of the HTTP response
          error = acmeClientParseOrderStatusResponse(context);
@@ -836,7 +836,7 @@ error_t acmeClientSendFinalizeOrderRequest(AcmeClientContext *context)
          //Perform HTTP request/response transaction
          error = acmeClientSendRequest(context);
       }
-      else if(context->requestState == ACME_REQ_STATE_PARSE_BODY)
+      else if(context->requestState == ACME_REQ_STATE_COMPLETE)
       {
          //Parse the body of the HTTP response
          error = acmeClientParseFinalizeOrderResponse(context);
@@ -873,10 +873,10 @@ error_t acmeClientFormatFinalizeOrderRequest(AcmeClientContext *context)
    json_t *payloadObj;
 
    //Any registered callback?
-   if(context->csrCallback != NULL)
+   if(context->csrGenCallback != NULL)
    {
       //Invoke user callback function
-      error = context->csrCallback(context, (uint8_t *) context->buffer,
+      error = context->csrGenCallback(context, (uint8_t *) context->buffer,
          ACME_CLIENT_BUFFER_SIZE, &n);
    }
    else

@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.5.0
+ * @version 2.5.2
  **/
 
 //Switch to the appropriate trace level
@@ -102,7 +102,7 @@ error_t acmeClientSendNewNonceRequest(AcmeClientContext *context)
          //Perform HTTP request/response transaction
          error = acmeClientSendRequest(context);
       }
-      else if(context->requestState == ACME_REQ_STATE_PARSE_BODY)
+      else if(context->requestState == ACME_REQ_STATE_COMPLETE)
       {
          //The response to a HEAD request does not contain a body
          error = acmeClientParseNewNonceResponse(context);

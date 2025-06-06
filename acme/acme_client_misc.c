@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.5.0
+ * @version 2.5.2
  **/
 
 //Switch to the appropriate trace level
@@ -35,7 +35,7 @@
 #include "acme/acme_client.h"
 #include "acme/acme_client_jose.h"
 #include "acme/acme_client_misc.h"
-#include "pkix/pem_import.h"
+#include "pkix/pem_key_import.h"
 #include "pkix/pem_cert_key_import.h"
 #include "pkix/x509_csr_create.h"
 #include "encoding/base64url.h"
@@ -694,8 +694,11 @@ error_t acmeClientSendRequest(AcmeClientContext *context)
          context->buffer[context->bufferLen] = '\0';
 
          //Debug message
-         TRACE_DEBUG("HTTP response body (%" PRIuSIZE " bytes):\r\n", context->bufferLen);
-         TRACE_DEBUG("%s\r\n\r\n", context->buffer);
+         if(context->bufferLen > 0)
+         {
+            TRACE_DEBUG("HTTP response body (%" PRIuSIZE " bytes):\r\n", context->bufferLen);
+            TRACE_DEBUG("%s\r\n\r\n", context->buffer);
+         }
 
          //Clear error description
          context->errorType[0] = '\0';
@@ -727,7 +730,7 @@ error_t acmeClientSendRequest(AcmeClientContext *context)
                //Reset error counter
                context->badNonceErrors = 0;
                //Update HTTP request state
-               context->requestState = ACME_REQ_STATE_PARSE_BODY;
+               context->requestState = ACME_REQ_STATE_COMPLETE;
             }
          }
          else
@@ -735,7 +738,7 @@ error_t acmeClientSendRequest(AcmeClientContext *context)
             //Reset error counter
             context->badNonceErrors = 0;
             //Update HTTP request state
-            context->requestState = ACME_REQ_STATE_PARSE_BODY;
+            context->requestState = ACME_REQ_STATE_COMPLETE;
          }
       }
    }
@@ -857,8 +860,8 @@ error_t acmeClientFormatRequestHeader(AcmeClientContext *context,
       context->bufferLen = 0;
    }
 
-   //Return status code
-   return error;
+   //Successful processing
+   return NO_ERROR;
 }
 
 
