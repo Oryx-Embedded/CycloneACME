@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.5.2
+ * @version 2.5.4
  **/
 
 #ifndef _ACME_CLIENT_H
@@ -66,13 +66,13 @@
 #endif
 
 //Version string
-#define CYCLONE_ACME_VERSION_STRING "2.5.2"
+#define CYCLONE_ACME_VERSION_STRING "2.5.4"
 //Major version
 #define CYCLONE_ACME_MAJOR_VERSION 2
 //Minor version
 #define CYCLONE_ACME_MINOR_VERSION 5
 //Revision number
-#define CYCLONE_ACME_REV_NUMBER 2
+#define CYCLONE_ACME_REV_NUMBER 4
 
 //ACME client support
 #ifndef ACME_CLIENT_SUPPORT
@@ -393,7 +393,7 @@ typedef enum
  * @brief TLS initialization callback function
  **/
 
-typedef error_t (*AcmeClientTlsInitCallback)(HttpClientContext *context,
+typedef error_t (*AcmeClientTlsInitCallback)(AcmeClientContext *context,
    TlsContext *tlsContext);
 
 

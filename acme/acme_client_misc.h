@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.5.2
+ * @version 2.5.4
  **/
 
 #ifndef _ACME_CLIENT_MISC_H
@@ -67,6 +67,9 @@ error_t acmeClientGenerateCsr(AcmeClientContext *context, uint8_t *buffer,
 
 error_t acmeClientParseResponseHeader(AcmeClientContext *context);
 error_t acmeClientParseProblemDetails(AcmeClientContext *context);
+
+error_t acmeClientInitTlsContext(HttpClientContext *httpClientContext,
+   TlsContext *tlsContext, void *param);
 
 const char_t *acmeClientGetPath(const char_t *url);
 

@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.5.2
+ * @version 2.5.4
  **/
 
 //Switch to the appropriate trace level
@@ -1367,6 +1367,40 @@ error_t acmeClientParseProblemDetails(AcmeClientContext *context)
 
       //Release JSON object
       json_decref(rootObj);
+   }
+
+   //Return status code
+   return error;
+}
+
+
+/**
+ * @brief TLS initialization
+ * @param[in] httpClientContext Pointer to the HTTP client context
+ * @param[in] tlsContext Pointer to the TLS context
+ * @param[in] param Pointer to the ACME client context
+ * @return Error code
+ **/
+
+error_t acmeClientInitTlsContext(HttpClientContext *httpClientContext,
+   TlsContext *tlsContext, void *param)
+{
+   error_t error;
+   AcmeClientContext *context;
+
+   //Point to the ACME client context
+   context = (AcmeClientContext *) param;
+
+   //Perform TLS related initialization
+   if(context->tlsInitCallback != NULL)
+   {
+      //Invoke callback function
+      error = context->tlsInitCallback(context, tlsContext);
+   }
+   else
+   {
+      //Report an error
+      error = ERROR_FAILURE;
    }
 
    //Return status code

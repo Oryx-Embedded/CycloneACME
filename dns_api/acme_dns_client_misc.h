@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.5.2
+ * @version 2.5.4
  **/
 
 #ifndef _ACME_DNS_CLIENT_MISC_H
@@ -47,6 +47,13 @@ error_t acmeDnsClientFormatUpdateRequest(AcmeDnsClientContext *context,
    const char_t *txt);
 
 error_t acmeDnsClientParseUpdateResponse(AcmeDnsClientContext *context);
+
+#if (ACME_DNS_CLIENT_TLS_SUPPORT == ENABLED)
+
+error_t acmeDnsClientInitTlsContext(HttpClientContext *httpClientContext,
+   TlsContext *tlsContext, void *param);
+
+#endif
 
 //C++ guard
 #ifdef __cplusplus

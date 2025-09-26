@@ -38,7 +38,7 @@
  * - RFC 7638: JSON Web Key (JWK) Thumbprint
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.5.2
+ * @version 2.5.4
  **/
 
 //Switch to the appropriate trace level
@@ -295,7 +295,7 @@ error_t acmeClientConnect(AcmeClientContext *context,
          {
             //Register TLS initialization callback
             error = httpClientRegisterTlsInitCallback(&context->httpClientContext,
-               context->tlsInitCallback);
+               acmeClientInitTlsContext, context);
          }
          else
          {

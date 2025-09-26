@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.5.2
+ * @version 2.5.4
  **/
 
 #ifndef _ACME_DNS_CLIENT_H
@@ -145,7 +145,7 @@ typedef enum
  * @brief TLS initialization callback function
  **/
 
-typedef error_t (*AcmeDnsClientTlsInitCallback)(HttpClientContext *context,
+typedef error_t (*AcmeDnsClientTlsInitCallback)(AcmeDnsClientContext *context,
    TlsContext *tlsContext);
 
 #endif

@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.5.2
+ * @version 2.5.4
  **/
 
 //Switch to the appropriate trace level
@@ -377,9 +377,13 @@ error_t acmeDnsClientConnect(AcmeDnsClientContext *context,
          context->serverPort = serverPort;
 
 #if (ACME_DNS_CLIENT_TLS_SUPPORT == ENABLED)
-         //Register TLS initialization callback
-         error = httpClientRegisterTlsInitCallback(&context->httpClientContext,
-            context->tlsInitCallback);
+         //TLS-secured connection?
+         if(context->tlsInitCallback != NULL)
+         {
+            //Register TLS initialization callback
+            error = httpClientRegisterTlsInitCallback(&context->httpClientContext,
+               acmeDnsClientInitTlsContext, context);
+         }
 #endif
          //Check status code
          if(!error)
