@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.6.6
+ * @version 2.6.8
  **/
 
 //Switch to the appropriate trace level
@@ -206,20 +206,28 @@ error_t acmeClientParseAuthorizationResponse(AcmeClientContext *context,
 
    //Check HTTP status code
    if(!HTTP_STATUS_CODE_2YZ(context->statusCode))
+   {
       return ERROR_UNEXPECTED_STATUS;
+   }
 
    //The server must include a Replay-Nonce header field in every successful
    //response to a POST request (refer to RFC 8555, section 6.5)
    if(context->nonce[0] == '\0')
+   {
       return ERROR_INVALID_RESPONSE;
+   }
 
    //Invalid media type?
    if(osStrcasecmp(context->contentType, "application/json") != 0)
+   {
       return ERROR_INVALID_RESPONSE;
+   }
 
    //Check whether the body of the response is truncated
    if(context->bufferLen >= ACME_CLIENT_BUFFER_SIZE)
+   {
       return ERROR_RESPONSE_TOO_LARGE;
+   }
 
    //Initialize status code
    error = ERROR_INVALID_RESPONSE;
@@ -232,14 +240,18 @@ error_t acmeClientParseAuthorizationResponse(AcmeClientContext *context,
    {
       //Any parsing error?
       if(!json_is_object(rootObj))
+      {
          break;
+      }
 
       //Get "status" object
       statusObj = json_object_get(rootObj, "status");
 
       //The object must be a valid string
       if(!json_is_string(statusObj))
+      {
          break;
+      }
 
       //Get the value of the string
       status = json_string_value(statusObj);
@@ -251,21 +263,27 @@ error_t acmeClientParseAuthorizationResponse(AcmeClientContext *context,
 
       //Invalid object?
       if(!json_is_object(identifierObj))
+      {
          break;
+      }
 
       //Get "value" object
       valueObj = json_object_get(identifierObj, "value");
 
       //The object must be a valid string
       if(!json_is_string(valueObj))
+      {
          break;
+      }
 
       //Get the value of the string
       value = json_string_value(valueObj);
 
       //Check the length of the identifier value
       if(osStrlen(value) > ACME_CLIENT_MAX_URL_LEN)
+      {
          break;
+      }
 
       //Get "wildcard" object
       wildcardObj = json_object_get(rootObj, "wildcard");
@@ -289,7 +307,9 @@ error_t acmeClientParseAuthorizationResponse(AcmeClientContext *context,
 
          //The object must be a valid array
          if(!json_is_array(arrayObj))
+         {
             break;
+         }
 
          //Retrieve the numbers of items in the array
          n = json_array_size(arrayObj);
@@ -302,7 +322,9 @@ error_t acmeClientParseAuthorizationResponse(AcmeClientContext *context,
 
             //Invalid object?
             if(!json_is_object(challengeObj))
+            {
                break;
+            }
 
             //Challenge objects all contain the following basic fields
             typeObj = json_object_get(challengeObj, "type");
@@ -330,14 +352,16 @@ error_t acmeClientParseAuthorizationResponse(AcmeClientContext *context,
 
                //The object must be a valid string
                if(!json_is_string(tokenObj))
+               {
                   break;
+               }
 
                //Get the value of the string
                token = json_string_value(tokenObj);
 
                //Valid challenge object?
                if(osStrlen(url) <= ACME_CLIENT_MAX_URL_LEN &&
-                  osStrlen(token) <= ACME_CLIENT_MAX_URL_LEN &&
+                  osStrlen(token) <= ACME_CLIENT_MAX_TOKEN_LEN &&
                   osStrlen(value) <= ACME_CLIENT_MAX_NAME_LEN)
                {
                   //Point to the current challenge

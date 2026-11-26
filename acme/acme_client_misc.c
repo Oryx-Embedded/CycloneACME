@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.6.6
+ * @version 2.6.8
  **/
 
 //Switch to the appropriate trace level
@@ -769,19 +769,25 @@ error_t acmeClientFormatRequestHeader(AcmeClientContext *context,
 
    //Make sure the URL is valid
    if(url == NULL || url[0] == '\0')
+   {
       return ERROR_INVALID_PARAMETER;
+   }
 
    //Create a new HTTP request
    error = httpClientCreateRequest(&context->httpClientContext);
    //Any error to report?
    if(error)
+   {
       return error;
+   }
 
    //Set HTTP request method
    error = httpClientSetMethod(&context->httpClientContext, method);
    //Any error to report?
    if(error)
+   {
       return error;
+   }
 
    //Get the path portion of the URL
    path = acmeClientGetPath(url);
@@ -790,7 +796,9 @@ error_t acmeClientFormatRequestHeader(AcmeClientContext *context,
    error = httpClientSetUri(&context->httpClientContext, path);
    //Any error to report?
    if(error)
+   {
       return error;
+   }
 
    //A client must send a Host header field in all HTTP/1.1 requests (refer
    //to RFC 7230, section 5.4)
@@ -810,7 +818,9 @@ error_t acmeClientFormatRequestHeader(AcmeClientContext *context,
 
    //Any error to report?
    if(error)
+   {
       return error;
+   }
 
    //ACME clients must send a User-Agent header field (refer to RFC 8555,
    //section 6.1)
@@ -818,7 +828,9 @@ error_t acmeClientFormatRequestHeader(AcmeClientContext *context,
       "Mozilla/5.0");
    //Any error to report?
    if(error)
+   {
       return error;
+   }
 
    //Check ACME client state
    if(context->state == ACME_CLIENT_STATE_DOWNLOAD_CERT)
@@ -829,7 +841,9 @@ error_t acmeClientFormatRequestHeader(AcmeClientContext *context,
          "application/pem-certificate-chain");
       //Any error to report?
       if(error)
+      {
          return error;
+      }
    }
 
    //POST request?
@@ -841,14 +855,18 @@ error_t acmeClientFormatRequestHeader(AcmeClientContext *context,
          "Content-Type", "application/jose+json");
       //Any error to report?
       if(error)
+      {
          return error;
+      }
 
       //Specify the length of the request body
       error = httpClientSetContentLength(&context->httpClientContext,
          context->bufferLen);
       //Any error to report?
       if(error)
+      {
          return error;
+      }
 
       //Once a nonce value has appeared in an ACME request, the server will
       //consider it invalid (refer to RFC 8555, section 6.5)
@@ -904,7 +922,9 @@ error_t acmeClientFormatJwsProtectedHeader(const AcmeKeyPair *keyPair,
       ret = json_object_set_new(protectedObj, "alg", json_string(keyPair->alg));
       //Any error to report?
       if(ret != 0)
+      {
          break;
+      }
 
       //The "jwk" and "kid" fields are mutually exclusive (refer to RFC 8555,
       //section 6.2)
@@ -914,14 +934,18 @@ error_t acmeClientFormatJwsProtectedHeader(const AcmeKeyPair *keyPair,
          error = acmeClientFormatJwk(keyPair, buffer, &n, FALSE);
          //Any error to report?
          if(error)
+         {
             break;
+         }
 
          //For newAccount requests, and for revokeCert requests authenticated by
          //a certificate key, there must be a "jwk" field
          ret = json_object_set_new(protectedObj, "jwk", json_loads(buffer, 0, NULL));
          //Any error to report?
          if(ret != 0)
+         {
             break;
+         }
       }
       else
       {
@@ -930,7 +954,9 @@ error_t acmeClientFormatJwsProtectedHeader(const AcmeKeyPair *keyPair,
          ret = json_object_set_new(protectedObj, "kid", json_string(kid));
          //Any error to report?
          if(ret != 0)
+         {
             break;
+         }
       }
 
       //Valid nonce?
@@ -941,14 +967,18 @@ error_t acmeClientFormatJwsProtectedHeader(const AcmeKeyPair *keyPair,
          ret = json_object_set_new(protectedObj, "nonce", json_string(nonce));
          //Any error to report?
          if(ret != 0)
+         {
             break;
+         }
       }
 
       //The JWS protected header must include an "url" field
       ret = json_object_set_new(protectedObj, "url", json_string(url));
       //Any error to report?
       if(ret != 0)
+      {
          break;
+      }
 
       //Generate the JSON representation of the JWK object
       protected = json_dumps(protectedObj, JSON_COMPACT);

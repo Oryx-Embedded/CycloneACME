@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.6.6
+ * @version 2.6.8
  **/
 
 //Switch to the appropriate trace level
@@ -123,11 +123,15 @@ error_t acmeDnsClientParseRegisterResponse(AcmeDnsClientContext *context)
 
    //Check HTTP status code
    if(!HTTP_STATUS_CODE_2YZ(context->statusCode))
+   {
       return ERROR_UNEXPECTED_STATUS;
+   }
 
    //Check whether the body of the response is truncated
    if(context->bufferLen >= ACME_DNS_CLIENT_BUFFER_SIZE)
+   {
       return ERROR_RESPONSE_TOO_LARGE;
+   }
 
    //Initialize status code
    error = ERROR_INVALID_RESPONSE;
@@ -203,7 +207,9 @@ error_t acmeDnsClientFormatUpdateRequest(AcmeDnsClientContext *context,
 
    //Check the length of the TXT record
    if(osStrlen(txt) != ACME_DNS_TXT_RECORD_LEN)
+   {
       return ERROR_INVALID_LENGTH;
+   }
 
    //Create an HTTP request
    httpClientCreateRequest(&context->httpClientContext);
@@ -276,11 +282,15 @@ error_t acmeDnsClientParseUpdateResponse(AcmeDnsClientContext *context)
 {
    //Check HTTP status code
    if(!HTTP_STATUS_CODE_2YZ(context->statusCode))
+   {
       return ERROR_UNEXPECTED_STATUS;
+   }
 
    //Check whether the body of the response is truncated
    if(context->bufferLen >= ACME_DNS_CLIENT_BUFFER_SIZE)
+   {
       return ERROR_RESPONSE_TOO_LARGE;
+   }
 
    //Successful processing
    return NO_ERROR;

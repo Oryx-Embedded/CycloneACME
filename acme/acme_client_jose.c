@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.6.6
+ * @version 2.6.8
  **/
 
 //Switch to the appropriate trace level
@@ -81,7 +81,9 @@ error_t jwkExportRsaPublicKey(const RsaPublicKey *publicKey, char_t *buffer,
       ret = json_object_set_new(rootObj, "kty", json_string("RSA"));
       //Any error to report?
       if(ret != 0)
+      {
          break;
+      }
 
       //The octet sequence must utilize the minimum number of octets to
       //represent the RSA modulus (refer to RFC 7518, section 6.3.1.1)
@@ -92,7 +94,9 @@ error_t jwkExportRsaPublicKey(const RsaPublicKey *publicKey, char_t *buffer,
          MPI_FORMAT_BIG_ENDIAN);
       //Any error to report?
       if(error)
+      {
          break;
+      }
 
       //Integers are represented using the base64url encoding of their
       //big-endian representations
@@ -102,7 +106,9 @@ error_t jwkExportRsaPublicKey(const RsaPublicKey *publicKey, char_t *buffer,
       ret = json_object_set_new(rootObj, "n", json_string(buffer));
       //Any error to report?
       if(ret != 0)
+      {
          break;
+      }
 
       //Retrieve the length of the RSA public exponent
       n = mpiGetByteLength(&publicKey->e);
@@ -112,7 +118,9 @@ error_t jwkExportRsaPublicKey(const RsaPublicKey *publicKey, char_t *buffer,
          MPI_FORMAT_BIG_ENDIAN);
       //Any error to report?
       if(error)
+      {
          break;
+      }
 
       //Integers are represented using the base64url encoding of their
       //big-endian representations
@@ -122,7 +130,9 @@ error_t jwkExportRsaPublicKey(const RsaPublicKey *publicKey, char_t *buffer,
       ret = json_object_set_new(rootObj, "e", json_string(buffer));
       //Any error to report?
       if(ret != 0)
+      {
          break;
+      }
 
       //If this sort parameter is set, all the keys of the JWK representation
       //are sorted in lexicographic order
@@ -199,14 +209,18 @@ error_t jwkExportEcPublicKey(const EcPublicKey *publicKey, char_t *buffer,
    {
       //Invalid elliptic curve?
       if(publicKey->curve == NULL)
+      {
          break;
+      }
 
       //The "kty" (key type) parameter identifies the cryptographic algorithm
       //family used with the key (refer to RFC 7517, section 4.1)
       ret = json_object_set_new(rootObj, "kty", json_string("EC"));
       //Any error to report?
       if(ret != 0)
+      {
          break;
+      }
 
       //The "crv" (curve) parameter identifies the cryptographic curve used
       //with the key (refer to RFC 7518, section 6.2.1.1)
@@ -235,7 +249,9 @@ error_t jwkExportEcPublicKey(const EcPublicKey *publicKey, char_t *buffer,
       ret |= json_object_set_new(rootObj, "crv", json_string(crv));
       //Any error to report?
       if(ret != 0)
+      {
          break;
+      }
 
       //The length of the "x" octet string must be the full size of the
       //x-coordinate for the curve specified in the "crv" parameter (refer
@@ -244,7 +260,9 @@ error_t jwkExportEcPublicKey(const EcPublicKey *publicKey, char_t *buffer,
          EC_PUBLIC_KEY_FORMAT_RAW_X);
       //Any error to report?
       if(error)
+      {
          break;
+      }
 
       //Integers are represented using the base64url encoding of their
       //big-endian representations
@@ -254,7 +272,9 @@ error_t jwkExportEcPublicKey(const EcPublicKey *publicKey, char_t *buffer,
       ret = json_object_set_new(rootObj, "x", json_string(buffer));
       //Any error to report?
       if(ret != 0)
+      {
          break;
+      }
 
       //The length of the "y" octet string must be the full size of the
       //y-coordinate for the curve specified in the "crv" parameter (refer
@@ -263,7 +283,9 @@ error_t jwkExportEcPublicKey(const EcPublicKey *publicKey, char_t *buffer,
          EC_PUBLIC_KEY_FORMAT_RAW_Y);
       //Any error to report?
       if(error)
+      {
          break;
+      }
 
       //Integers are represented using the base64url encoding of their
       //big-endian representations
@@ -273,7 +295,9 @@ error_t jwkExportEcPublicKey(const EcPublicKey *publicKey, char_t *buffer,
       ret = json_object_set_new(rootObj, "y", json_string(buffer));
       //Any error to report?
       if(ret != 0)
+      {
          break;
+      }
 
       //If this sort parameter is set, all the keys of the JWK representation
       //are sorted in lexicographic order
@@ -351,13 +375,17 @@ error_t jwkExportEddsaPublicKey(const EddsaPublicKey *publicKey, char_t *buffer,
    {
       //Invalid elliptic curve?
       if(publicKey->curve == NULL)
+      {
          break;
+      }
 
       //The parameter "kty" must be "OKP" (refer to RFC 8037, section 2)
       ret = json_object_set_new(rootObj, "kty", json_string("OKP"));
       //Any error to report?
       if(ret != 0)
+      {
          break;
+      }
 
       //The parameter "crv" must be present and contain the subtype of the key
       if(osStrcmp(publicKey->curve->name, "Ed25519") == 0)
@@ -380,13 +408,17 @@ error_t jwkExportEddsaPublicKey(const EddsaPublicKey *publicKey, char_t *buffer,
       ret |= json_object_set_new(rootObj, "crv", json_string(crv));
       //Any error to report?
       if(ret != 0)
+      {
          break;
+      }
 
       //Convert the public key to an octet string
       error = eddsaExportPublicKey(publicKey, (uint8_t *) buffer, &n);
       //Any error to report?
       if(error)
+      {
          break;
+      }
 
       //Integers are represented using the base64url encoding of their
       //big-endian representations
@@ -396,7 +428,9 @@ error_t jwkExportEddsaPublicKey(const EddsaPublicKey *publicKey, char_t *buffer,
       ret = json_object_set_new(rootObj, "x", json_string(buffer));
       //Any error to report?
       if(ret != 0)
+      {
          break;
+      }
 
       //If this sort parameter is set, all the keys of the JWK representation
       //are sorted in lexicographic order
@@ -492,7 +526,9 @@ error_t jwsCreate(const PrngAlgo *prngAlgo, void *prngContext,
       ret = json_object_set_new(rootObj, "protected", json_string(p));
       //Any error to report?
       if(ret != 0)
+      {
          break;
+      }
 
       //Advance write pointer
       p += n;
@@ -509,7 +545,9 @@ error_t jwsCreate(const PrngAlgo *prngAlgo, void *prngContext,
       ret = json_object_set_new(rootObj, "payload", json_string(p));
       //Any error to report?
       if(ret != 0)
+      {
          break;
+      }
 
       //Advance write pointer
       p += n;
@@ -523,7 +561,9 @@ error_t jwsCreate(const PrngAlgo *prngAlgo, void *prngContext,
          buffer, n, (uint8_t *) buffer, &n);
       //Any error to report?
       if(error)
+      {
          break;
+      }
 
       //Encode the JWS signature using Base64url
       base64urlEncode(buffer, n, buffer, &n);
@@ -533,7 +573,9 @@ error_t jwsCreate(const PrngAlgo *prngAlgo, void *prngContext,
       ret = json_object_set_new(rootObj, "signature", json_string(buffer));
       //Any error to report?
       if(ret != 0)
+      {
          break;
+      }
 
       //Generate the JSON representation of the JWS object
       s = json_dumps(rootObj, JSON_COMPACT);

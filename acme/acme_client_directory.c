@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.6.6
+ * @version 2.6.8
  **/
 
 //Switch to the appropriate trace level
@@ -152,15 +152,21 @@ error_t acmeClientParseDirectoryResponse(AcmeClientContext *context)
 
    //Check HTTP status code
    if(!HTTP_STATUS_CODE_2YZ(context->statusCode))
+   {
       return ERROR_UNEXPECTED_STATUS;
+   }
 
    //Invalid media type?
    if(osStrcasecmp(context->contentType, "application/json") != 0)
+   {
       return ERROR_INVALID_RESPONSE;
+   }
 
    //Check whether the body of the response is truncated
    if(context->bufferLen >= ACME_CLIENT_BUFFER_SIZE)
+   {
       return ERROR_RESPONSE_TOO_LARGE;
+   }
 
    //Initialize status code
    error = ERROR_INVALID_RESPONSE;

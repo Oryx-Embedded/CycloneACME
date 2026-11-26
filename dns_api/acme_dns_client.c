@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.6.6
+ * @version 2.6.8
  **/
 
 //Switch to the appropriate trace level
@@ -52,7 +52,9 @@ error_t acmeDnsClientInit(AcmeDnsClientContext *context)
 
    //Make sure the ACME-DNS client context is valid
    if(context == NULL)
+   {
       return ERROR_INVALID_PARAMETER;
+   }
 
    //Clear ACME-DNS client context
    osMemset(context, 0, sizeof(AcmeDnsClientContext));
@@ -61,7 +63,9 @@ error_t acmeDnsClientInit(AcmeDnsClientContext *context)
    error = httpClientInit(&context->httpClientContext);
    //Any error to report?
    if(error)
+   {
       return error;
+   }
 
    //Initialize ACME-DNS client state
    context->state = ACME_DNS_CLIENT_STATE_DISCONNECTED;
@@ -87,7 +91,9 @@ error_t acmeDnsClientRegisterTlsInitCallback(AcmeDnsClientContext *context,
 {
    //Make sure the ACME-DNS client context is valid
    if(context == NULL)
+   {
       return ERROR_INVALID_PARAMETER;
+   }
 
    //Save callback function
    context->tlsInitCallback = callback;
@@ -111,7 +117,9 @@ error_t acmeDnsClientSetTimeout(AcmeDnsClientContext *context,
 {
    //Make sure the ACME-DNS client context is valid
    if(context == NULL)
+   {
       return ERROR_INVALID_PARAMETER;
+   }
 
    //Save timeout value
    context->timeout = timeout;
@@ -133,11 +141,15 @@ error_t acmeDnsClientSetHost(AcmeDnsClientContext *context,
 {
    //Check parameters
    if(context == NULL || host == NULL)
+   {
       return ERROR_INVALID_PARAMETER;
+   }
 
    //Make sure the length of the host name is acceptable
    if(osStrlen(host) > ACME_DNS_CLIENT_MAX_HOST_LEN)
+   {
       return ERROR_INVALID_LENGTH;
+   }
 
    //Save host name
    osStrcpy(context->serverName, host);
@@ -159,11 +171,15 @@ error_t acmeDnsClientSetUsername(AcmeDnsClientContext *context,
 {
    //Check parameters
    if(context == NULL || username == NULL)
+   {
       return ERROR_INVALID_PARAMETER;
+   }
 
    //Make sure the length of the user name is acceptable
    if(osStrlen(username) > ACME_DNS_CLIENT_MAX_USERNAME_LEN)
+   {
       return ERROR_INVALID_LENGTH;
+   }
 
    //Save user name
    osStrcpy(context->username, username);
@@ -185,11 +201,15 @@ error_t acmeDnsClientSetPassword(AcmeDnsClientContext *context,
 {
    //Check parameters
    if(context == NULL || password == NULL)
+   {
       return ERROR_INVALID_PARAMETER;
+   }
 
    //Make sure the length of the password is acceptable
    if(osStrlen(password) > ACME_DNS_CLIENT_MAX_PASSWORD_LEN)
+   {
       return ERROR_INVALID_LENGTH;
+   }
 
    //Save password
    osStrcpy(context->password, password);
@@ -211,11 +231,15 @@ error_t acmeDnsClientSetSubDomain(AcmeDnsClientContext *context,
 {
    //Check parameters
    if(context == NULL || subDomain == NULL)
+   {
       return ERROR_INVALID_PARAMETER;
+   }
 
    //Make sure the length of the sub domain is acceptable
    if(osStrlen(subDomain) > ACME_DNS_CLIENT_MAX_SUB_DOMAIN_LEN)
+   {
       return ERROR_INVALID_LENGTH;
+   }
 
    //Save sub domain
    osStrcpy(context->subDomain, subDomain);
@@ -337,7 +361,9 @@ error_t acmeDnsClientBindToInterface(AcmeDnsClientContext *context,
 {
    //Make sure the ACME-DNS client context is valid
    if(context == NULL)
+   {
       return ERROR_INVALID_PARAMETER;
+   }
 
    //Explicitly associate the ACME-DNS client with the specified interface
    context->interface = interface;
@@ -365,7 +391,9 @@ error_t acmeDnsClientConnect(AcmeDnsClientContext *context,
 
    //Make sure the ACME-DNS client context is valid
    if(context == NULL)
+   {
       return ERROR_INVALID_PARAMETER;
+   }
 
    //Establish connection with the HTTP server
    while(!error)
@@ -780,7 +808,9 @@ error_t acmeDnsClientDisconnect(AcmeDnsClientContext *context)
 
    //Make sure the ACME-DNS client context is valid
    if(context == NULL)
+   {
       return ERROR_INVALID_PARAMETER;
+   }
 
    //Initialize status code
    error = NO_ERROR;
@@ -844,7 +874,9 @@ error_t acmeDnsClientClose(AcmeDnsClientContext *context)
 {
    //Make sure the ACME-DNS client context is valid
    if(context == NULL)
+   {
       return ERROR_INVALID_PARAMETER;
+   }
 
    //Close HTTP connection
    httpClientClose(&context->httpClientContext);

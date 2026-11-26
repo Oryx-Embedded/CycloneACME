@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.6.6
+ * @version 2.6.8
  **/
 
 //Switch to the appropriate trace level
@@ -133,12 +133,16 @@ error_t acmeClientParseNewNonceResponse(AcmeClientContext *context)
 {
    //Check HTTP status code
    if(!HTTP_STATUS_CODE_2YZ(context->statusCode))
+   {
       return ERROR_UNEXPECTED_STATUS;
+   }
 
    //The server's response must include a Replay-Nonce header field containing
    //a fresh nonce (refer to RFC 8555, section 7.2)
    if(context->nonce[0] == '\0')
+   {
       return ERROR_INVALID_RESPONSE;
+   }
 
    //The response to a HEAD request does not contain a body
    return NO_ERROR;

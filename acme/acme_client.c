@@ -38,7 +38,7 @@
  * - RFC 7638: JSON Web Key (JWK) Thumbprint
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.6.6
+ * @version 2.6.8
  **/
 
 //Switch to the appropriate trace level
@@ -72,7 +72,9 @@ error_t acmeClientInit(AcmeClientContext *context)
 
    //Make sure the ACME client context is valid
    if(context == NULL)
+   {
       return ERROR_INVALID_PARAMETER;
+   }
 
    //Clear ACME client context
    osMemset(context, 0, sizeof(AcmeClientContext));
@@ -84,7 +86,9 @@ error_t acmeClientInit(AcmeClientContext *context)
    error = httpClientInit(&context->httpClientContext);
    //Any error to report?
    if(error)
+   {
       return error;
+   }
 
    //Initialize ACME client state
    context->state = ACME_CLIENT_STATE_DISCONNECTED;
@@ -113,7 +117,9 @@ error_t acmeClientRegisterTlsInitCallback(AcmeClientContext *context,
 {
    //Make sure the ACME client context is valid
    if(context == NULL)
+   {
       return ERROR_INVALID_PARAMETER;
+   }
 
    //Save callback function
    context->tlsInitCallback = callback;
@@ -135,7 +141,9 @@ error_t acmeClientRegisterCsrGenCallback(AcmeClientContext *context,
 {
    //Make sure the ACME client context is valid
    if(context == NULL)
+   {
       return ERROR_INVALID_PARAMETER;
+   }
 
    //Save callback function
    context->csrGenCallback = callback;
@@ -158,7 +166,9 @@ error_t acmeClientSetPrng(AcmeClientContext *context, const PrngAlgo *prngAlgo,
 {
    //Check parameters
    if(context == NULL || prngAlgo == NULL || prngContext == NULL)
+   {
       return ERROR_INVALID_PARAMETER;
+   }
 
    //PRNG algorithm that will be used to generate random numbers
    context->prngAlgo = prngAlgo;
@@ -181,7 +191,9 @@ error_t acmeClientSetTimeout(AcmeClientContext *context, systime_t timeout)
 {
    //Make sure the ACME client context is valid
    if(context == NULL)
+   {
       return ERROR_INVALID_PARAMETER;
+   }
 
    //Save timeout value
    context->timeout = timeout;
@@ -202,11 +214,15 @@ error_t acmeClientSetHost(AcmeClientContext *context, const char_t *host)
 {
    //Check parameters
    if(context == NULL || host == NULL)
+   {
       return ERROR_INVALID_PARAMETER;
+   }
 
    //Make sure the length of the host name is acceptable
    if(osStrlen(host) > ACME_CLIENT_MAX_NAME_LEN)
+   {
       return ERROR_INVALID_LENGTH;
+   }
 
    //Save host name
    osStrcpy(context->serverName, host);
@@ -228,11 +244,15 @@ error_t acmeClientSetDirectoryUri(AcmeClientContext *context,
 {
    //Check parameters
    if(context == NULL || directoryUri == NULL)
+   {
       return ERROR_INVALID_PARAMETER;
+   }
 
    //Make sure the length of the URI is acceptable
    if(osStrlen(directoryUri) > ACME_CLIENT_MAX_URI_LEN)
+   {
       return ERROR_INVALID_LENGTH;
+   }
 
    //Save the URI of the directory object
    osStrcpy(context->directoryUri, directoryUri);
@@ -254,7 +274,9 @@ error_t acmeClientBindToInterface(AcmeClientContext *context,
 {
    //Make sure the ACME client context is valid
    if(context == NULL)
+   {
       return ERROR_INVALID_PARAMETER;
+   }
 
    //Explicitly associate the ACME client with the specified interface
    context->interface = interface;
@@ -282,7 +304,9 @@ error_t acmeClientConnect(AcmeClientContext *context,
 
    //Make sure the ACME client context is valid
    if(context == NULL)
+   {
       return ERROR_INVALID_PARAMETER;
+   }
 
    //Establish connection with the HTTP server
    while(!error)
@@ -433,7 +457,9 @@ error_t acmeClientCreateAccount(AcmeClientContext *context,
 
    //Check parameters
    if(context == NULL || params == NULL)
+   {
       return ERROR_INVALID_PARAMETER;
+   }
 
    //Initialize variables
    error = NO_ERROR;
@@ -545,7 +571,9 @@ error_t acmeClientUpdateAccount(AcmeClientContext *context,
 
    //Check parameters
    if(context == NULL || params == NULL)
+   {
       return ERROR_INVALID_PARAMETER;
+   }
 
    //Initialize variables
    error = NO_ERROR;
@@ -780,7 +808,9 @@ error_t acmeClientDeactivateAccount(AcmeClientContext *context)
 
    //Make sure the ACME client context is valid
    if(context == NULL)
+   {
       return ERROR_INVALID_PARAMETER;
+   }
 
    //Initialize variables
    error = NO_ERROR;
@@ -892,7 +922,9 @@ error_t acmeClientCreateOrder(AcmeClientContext *context,
 
    //Check parameters
    if(context == NULL || params == NULL)
+   {
       return ERROR_INVALID_PARAMETER;
+   }
 
    //Initialize variables
    error = NO_ERROR;
@@ -1213,7 +1245,9 @@ error_t acmeClientPollOrderStatus(AcmeClientContext *context,
 
    //Check parameters
    if(context == NULL || orderStatus == NULL)
+   {
       return ERROR_INVALID_PARAMETER;
+   }
 
    //Initialize variables
    error = NO_ERROR;
@@ -1466,7 +1500,9 @@ error_t acmeClientDownloadCertificate(AcmeClientContext *context,
 
    //Check parameters
    if(context == NULL || length == NULL)
+   {
       return ERROR_INVALID_PARAMETER;
+   }
 
    //Initialize variables
    error = NO_ERROR;
@@ -1591,7 +1627,9 @@ error_t acmeClientRevokeCertificate(AcmeClientContext *context,
 
    //Check parameters
    if(context == NULL || cert == NULL || certLen == 0)
+   {
       return ERROR_INVALID_PARAMETER;
+   }
 
    //Initialize variables
    error = NO_ERROR;
@@ -1712,7 +1750,9 @@ error_t acmeClientDisconnect(AcmeClientContext *context)
 
    //Make sure the ACME client context is valid
    if(context == NULL)
+   {
       return ERROR_INVALID_PARAMETER;
+   }
 
    //Initialize status code
    error = NO_ERROR;
@@ -1776,7 +1816,9 @@ error_t acmeClientClose(AcmeClientContext *context)
 {
    //Make sure the ACME client context is valid
    if(context == NULL)
+   {
       return ERROR_INVALID_PARAMETER;
+   }
 
    //Close HTTPS connection
    httpClientClose(&context->httpClientContext);

@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.6.6
+ * @version 2.6.8
  **/
 
 #ifndef _ACME_CLIENT_H
@@ -66,13 +66,13 @@
 #endif
 
 //Version string
-#define CYCLONE_ACME_VERSION_STRING "2.6.6"
+#define CYCLONE_ACME_VERSION_STRING "2.6.8"
 //Major version
 #define CYCLONE_ACME_MAJOR_VERSION 2
 //Minor version
 #define CYCLONE_ACME_MINOR_VERSION 6
 //Revision number
-#define CYCLONE_ACME_REV_NUMBER 6
+#define CYCLONE_ACME_REV_NUMBER 8
 
 //ACME client support
 #ifndef ACME_CLIENT_SUPPORT
@@ -236,6 +236,20 @@
    #define ACME_CLIENT_MAX_BAD_NONCE_ERRORS 5
 #elif (ACME_CLIENT_MAX_BAD_NONCE_ERRORS < 0)
    #error ACME_CLIENT_MAX_BAD_NONCE_ERRORS parameter is not valid
+#endif
+
+//Tolerance for clock skew, in seconds
+#ifndef ACME_CLIENT_MAX_CLOCK_SKEW
+   #define ACME_CLIENT_MAX_CLOCK_SKEW 3600
+#elif (ACME_CLIENT_MAX_CLOCK_SKEW < 0)
+   #error ACME_CLIENT_MAX_CLOCK_SKEW parameter is not valid
+#endif
+
+//Validity period of TLS-ALPN self-signed certificates, in seconds
+#ifndef ACME_CLIENT_SELF_SIGNED_CERT_VALIDITY
+   #define ACME_CLIENT_SELF_SIGNED_CERT_VALIDITY 86400
+#elif (ACME_CLIENT_SELF_SIGNED_CERT_VALIDITY < 1)
+   #error ACME_CLIENT_SELF_SIGNED_CERT_VALIDITY parameter is not valid
 #endif
 
 //Application specific context

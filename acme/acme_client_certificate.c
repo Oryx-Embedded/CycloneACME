@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.6.6
+ * @version 2.6.8
  **/
 
 //Switch to the appropriate trace level
@@ -267,16 +267,22 @@ error_t acmeClientParseDownloadCertResponse(AcmeClientContext *context,
 
    //Check HTTP status code
    if(!HTTP_STATUS_CODE_2YZ(context->statusCode))
+   {
       return ERROR_UNEXPECTED_STATUS;
+   }
 
    //The server must include a Replay-Nonce header field in every successful
    //response to a POST request (refer to RFC 8555, section 6.5)
    if(context->nonce[0] == '\0')
+   {
       return ERROR_INVALID_RESPONSE;
+   }
 
    //Invalid media type?
    if(osStrcasecmp(context->contentType, "application/pem-certificate-chain") != 0)
+   {
       return ERROR_INVALID_RESPONSE;
+   }
 
    //Valid buffer?
    if(buffer != NULL)
@@ -284,14 +290,18 @@ error_t acmeClientParseDownloadCertResponse(AcmeClientContext *context,
       //Make sure the output buffer is large enough to hold the entire
       //certificate chain
       if(context->certChainLen > size)
+      {
          return ERROR_BUFFER_OVERFLOW;
+      }
 
       //The body must contain a valid PEM certificate chain
       error = pemImportCertificate(buffer, context->certChainLen, NULL, &n,
          NULL);
       //Any error to report?
       if(error)
+      {
          return ERROR_INVALID_RESPONSE;
+      }
    }
 
    //Return the actual length of the certificate chain
@@ -430,7 +440,9 @@ error_t acmeClientFormatRevokeCertRequest(AcmeClientContext *context,
       &n, NULL);
    //Any error to report?
    if(error)
+   {
       return error;
+   }
 
    //Encode the DER certificate using Base64url
    base64urlEncode(context->buffer, n, context->buffer, &n);
@@ -535,12 +547,16 @@ error_t acmeClientParseRevokeCertResponse(AcmeClientContext *context)
 {
    //Check HTTP status code
    if(!HTTP_STATUS_CODE_2YZ(context->statusCode))
+   {
       return ERROR_UNEXPECTED_STATUS;
+   }
 
    //The server must include a Replay-Nonce header field in every successful
    //response to a POST request (refer to RFC 8555, section 6.5)
    if(context->nonce[0] == '\0')
+   {
       return ERROR_INVALID_RESPONSE;
+   }
 
    //Successful processing
    return NO_ERROR;

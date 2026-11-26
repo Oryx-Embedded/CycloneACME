@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.6.6
+ * @version 2.6.8
  **/
 
 //Switch to the appropriate trace level
@@ -56,18 +56,24 @@ error_t acmeClientCheckAccountParams(const AcmeAccountParams *params)
 
    //Sanity check
    if(params == NULL)
+   {
       return ERROR_INVALID_PARAMETER;
+   }
 
    //Check the number of contacts
    if(params->numContacts > ACME_CLIENT_MAX_CONTACTS)
+   {
       return ERROR_INVALID_PARAMETER;
+   }
 
    //Loop through the list of contacts
    for(i = 0; i < params->numContacts; i++)
    {
       //Each item must contain a valid string
       if(params->contacts[i] == NULL)
+      {
          return ERROR_INVALID_PARAMETER;
+      }
    }
 
    //The account parameters are valid
@@ -316,17 +322,23 @@ error_t acmeClientParseNewAccountResponse(AcmeClientContext *context)
 {
    //Check HTTP status code
    if(!HTTP_STATUS_CODE_2YZ(context->statusCode))
+   {
       return ERROR_UNEXPECTED_STATUS;
+   }
 
    //The server must include a Replay-Nonce header field in every successful
    //response to a POST request (refer to RFC 8555, section 6.5)
    if(context->nonce[0] == '\0')
+   {
       return ERROR_INVALID_RESPONSE;
+   }
 
    //The server returns the account URL in the Location HTTP header field (refer
    //to RFC 8555, section 7.3)
    if(context->account.url[0] == '\0')
+   {
       return ERROR_INVALID_RESPONSE;
+   }
 
    //Successful processing
    return NO_ERROR;
@@ -536,12 +548,16 @@ error_t acmeClientParseUpdateAccountResponse(AcmeClientContext *context)
 {
    //Check HTTP status code
    if(!HTTP_STATUS_CODE_2YZ(context->statusCode))
+   {
       return ERROR_UNEXPECTED_STATUS;
+   }
 
    //The server must include a Replay-Nonce header field in every successful
    //response to a POST request (refer to RFC 8555, section 6.5)
    if(context->nonce[0] == '\0')
+   {
       return ERROR_INVALID_RESPONSE;
+   }
 
    //Successful processing
    return NO_ERROR;
@@ -674,14 +690,18 @@ error_t acmeClientFormatKeyChangeRequest(AcmeClientContext *context,
       FALSE);
    //Any error to report?
    if(error)
+   {
       return error;
+   }
 
    //Load the new account key
    error = acmeClientLoadKeyPair(&newAccountKey, publicKey, publicKeyLen,
       privateKey, privateKeyLen, password);
    //Any error to report?
    if(error)
+   {
       return error;
+   }
 
    //To create this request object, the client first constructs a keyChange
    //object describing the account to be updated and its account key (refer
@@ -798,12 +818,16 @@ error_t acmeClientParseKeyChangeResponse(AcmeClientContext *context)
 {
    //Check HTTP status code
    if(!HTTP_STATUS_CODE_2YZ(context->statusCode))
+   {
       return ERROR_UNEXPECTED_STATUS;
+   }
 
    //The server must include a Replay-Nonce header field in every successful
    //response to a POST request (refer to RFC 8555, section 6.5)
    if(context->nonce[0] == '\0')
+   {
       return ERROR_INVALID_RESPONSE;
+   }
 
    //Successful processing
    return NO_ERROR;

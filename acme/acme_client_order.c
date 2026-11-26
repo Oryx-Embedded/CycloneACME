@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.6.6
+ * @version 2.6.8
  **/
 
 //Switch to the appropriate trace level
@@ -57,7 +57,9 @@ error_t acmeClientCheckOrderParams(const AcmeOrderParams *params)
 
    //Sanity check
    if(params == NULL)
+   {
       return ERROR_INVALID_PARAMETER;
+   }
 
    //Check the number of domains
    if(params->numDomains == 0 ||
@@ -71,11 +73,15 @@ error_t acmeClientCheckOrderParams(const AcmeOrderParams *params)
    {
       //Each item must contain a valid domain name
       if(params->domains[i].name == NULL)
+      {
          return ERROR_INVALID_PARAMETER;
+      }
 
       //Check the length of the domain name
       if(osStrlen(params->domains[i].name) > ACME_CLIENT_MAX_NAME_LEN)
+      {
          return ERROR_INVALID_PARAMETER;
+      }
 
 #if (ACME_CLIENT_HTTP_CHALLENGE_SUPPORT == ENABLED)
       //HTTP validation method?
@@ -110,11 +116,15 @@ error_t acmeClientCheckOrderParams(const AcmeOrderParams *params)
 
    //The certificate public key is required
    if(params->publicKey == NULL || params->publicKeyLen == 0)
+   {
       return ERROR_INVALID_PARAMETER;
+   }
 
    //The certificate private key is required
    if(params->privateKey == NULL || params->privateKeyLen == 0)
+   {
       return ERROR_INVALID_PARAMETER;
+   }
 
    //The account parameters are valid
    return NO_ERROR;
@@ -415,24 +425,34 @@ error_t acmeClientParseNewOrderResponse(AcmeClientContext *context)
 
    //Check HTTP status code
    if(!HTTP_STATUS_CODE_2YZ(context->statusCode))
+   {
       return ERROR_UNEXPECTED_STATUS;
+   }
 
    //The server must include a Replay-Nonce header field in every successful
    //response to a POST request (refer to RFC 8555, section 6.5)
    if(context->nonce[0] == '\0')
+   {
       return ERROR_INVALID_RESPONSE;
+   }
 
    //The response header must contain a valid Location HTTP header field
    if(context->order.url[0] == '\0')
+   {
       return ERROR_INVALID_RESPONSE;
+   }
 
    //Invalid media type?
    if(osStrcasecmp(context->contentType, "application/json") != 0)
+   {
       return ERROR_INVALID_RESPONSE;
+   }
 
    //Check whether the body of the response is truncated
    if(context->bufferLen >= ACME_CLIENT_BUFFER_SIZE)
+   {
       return ERROR_RESPONSE_TOO_LARGE;
+   }
 
    //Initialize status code
    error = ERROR_INVALID_RESPONSE;
@@ -445,14 +465,18 @@ error_t acmeClientParseNewOrderResponse(AcmeClientContext *context)
    {
       //Any parsing error?
       if(!json_is_object(rootObj))
+      {
          break;
+      }
 
       //Get "status" object
       statusObj = json_object_get(rootObj, "status");
 
       //The object must be a valid string
       if(!json_is_string(statusObj))
+      {
          break;
+      }
 
       //Get the value of the string
       status = json_string_value(statusObj);
@@ -464,7 +488,9 @@ error_t acmeClientParseNewOrderResponse(AcmeClientContext *context)
 
       //The object must be a valid array
       if(!json_is_array(arrayObj))
+      {
          break;
+      }
 
       //Retrieve the numbers of items in the array
       n = json_array_size(arrayObj);
@@ -479,14 +505,18 @@ error_t acmeClientParseNewOrderResponse(AcmeClientContext *context)
 
          //The object must be a valid string
          if(!json_is_string(authorizationObj))
+         {
             break;
+         }
 
          //Retrieve the value of the string
          authorization = json_string_value(authorizationObj);
 
          //Check the length of the string
          if(osStrlen(authorization) > ACME_CLIENT_MAX_URL_LEN)
+         {
             break;
+         }
 
          //Save the authorization URL
          osStrcpy(context->authorizations[i].url, authorization);
@@ -497,21 +527,27 @@ error_t acmeClientParseNewOrderResponse(AcmeClientContext *context)
 
       //Any parsing error?
       if(i < n)
+      {
          break;
+      }
 
       //Get "finalize" object
       finalizeObj = json_object_get(rootObj, "finalize");
 
       //The object must be a valid string
       if(!json_is_string(finalizeObj))
+      {
          break;
+      }
 
       //Retrieve the value of the string
       finalize = json_string_value(finalizeObj);
 
       //Check the length of the string
       if(osStrlen(finalize) > ACME_CLIENT_MAX_URL_LEN)
+      {
          break;
+      }
 
       //Save the finalize URL
       osStrcpy(context->order.finalize, finalize);
@@ -526,14 +562,18 @@ error_t acmeClientParseNewOrderResponse(AcmeClientContext *context)
 
          //The object must be a valid string
          if(!json_is_string(certificateObj))
+         {
             break;
+         }
 
          //Retrieve the value of the string
          certificate = json_string_value(certificateObj);
 
          //Check the length of the string
          if(osStrlen(certificate) > ACME_CLIENT_MAX_URL_LEN)
+         {
             break;
+         }
 
          //Save the certificate URL
          osStrcpy(context->order.certificate, certificate);
@@ -693,20 +733,28 @@ error_t acmeClientParseOrderStatusResponse(AcmeClientContext *context)
 
    //Check HTTP status code
    if(!HTTP_STATUS_CODE_2YZ(context->statusCode))
+   {
       return ERROR_UNEXPECTED_STATUS;
+   }
 
    //The server must include a Replay-Nonce header field in every successful
    //response to a POST request (refer to RFC 8555, section 6.5)
    if(context->nonce[0] == '\0')
+   {
       return ERROR_INVALID_RESPONSE;
+   }
 
    //Invalid media type?
    if(osStrcasecmp(context->contentType, "application/json") != 0)
+   {
       return ERROR_INVALID_RESPONSE;
+   }
 
    //Check whether the body of the response is truncated
    if(context->bufferLen >= ACME_CLIENT_BUFFER_SIZE)
+   {
       return ERROR_RESPONSE_TOO_LARGE;
+   }
 
    //Initialize status code
    error = ERROR_INVALID_RESPONSE;
@@ -719,14 +767,18 @@ error_t acmeClientParseOrderStatusResponse(AcmeClientContext *context)
    {
       //Any parsing error?
       if(!json_is_object(rootObj))
+      {
          break;
+      }
 
       //Get "status" object
       statusObj = json_object_get(rootObj, "status");
 
       //The object must be a valid string
       if(!json_is_string(statusObj))
+      {
          break;
+      }
 
       //Get the value of the string
       status = json_string_value(statusObj);
@@ -743,14 +795,18 @@ error_t acmeClientParseOrderStatusResponse(AcmeClientContext *context)
 
          //The object must be a valid string
          if(!json_is_string(certificateObj))
+         {
             break;
+         }
 
          //Retrieve the value of the string
          certificate = json_string_value(certificateObj);
 
          //Check the length of the string
          if(osStrlen(certificate) > ACME_CLIENT_MAX_URL_LEN)
+         {
             break;
+         }
 
          //Save the certificate URL
          osStrcpy(context->order.certificate, certificate);
@@ -887,7 +943,9 @@ error_t acmeClientFormatFinalizeOrderRequest(AcmeClientContext *context)
 
    //Any error to report?
    if(error)
+   {
       return error;
+   }
 
    //The CSR is sent in the Base64url-encoded version of the DER format
    base64urlEncode(context->buffer, n, context->buffer, &n);
@@ -957,12 +1015,16 @@ error_t acmeClientParseFinalizeOrderResponse(AcmeClientContext *context)
 {
    //Check HTTP status code
    if(!HTTP_STATUS_CODE_2YZ(context->statusCode))
+   {
       return ERROR_UNEXPECTED_STATUS;
+   }
 
    //The server must include a Replay-Nonce header field in every successful
    //response to a POST request (refer to RFC 8555, section 6.5)
    if(context->nonce[0] == '\0')
+   {
       return ERROR_INVALID_RESPONSE;
+   }
 
    //Successful processing
    return NO_ERROR;

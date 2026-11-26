@@ -25,7 +25,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @author Oryx Embedded SARL (www.oryx-embedded.com)
- * @version 2.6.6
+ * @version 2.6.8
  **/
 
 //Switch to the appropriate trace level
@@ -188,12 +188,16 @@ error_t acmeClientParseChallengeReadyResponse(AcmeClientContext *context)
 {
    //Check HTTP status code
    if(!HTTP_STATUS_CODE_2YZ(context->statusCode))
+   {
       return ERROR_UNEXPECTED_STATUS;
+   }
 
    //The server must include a Replay-Nonce header field in every successful
    //response to a POST request (refer to RFC 8555, section 6.5)
    if(context->nonce[0] == '\0')
+   {
       return ERROR_INVALID_RESPONSE;
+   }
 
    //The response to a HEAD request does not contain a body
    return NO_ERROR;
@@ -429,6 +433,7 @@ error_t acmeClientGenerateTlsAlpnCert(AcmeClientContext *context,
 #if (ACME_CLIENT_TLS_ALPN_CHALLENGE_SUPPORT == ENABLED)
    error_t error;
    size_t n;
+   time_t currentTime;
    X509CertRequestInfo *certReqInfo;
    X509Extensions *extensions;
    X509Validity validity;
@@ -570,19 +575,38 @@ error_t acmeClientGenerateTlsAlpnCert(AcmeClientContext *context,
       //Check status code
       if(!error)
       {
-         //Validity period
-         validity.notBefore.year = 2020;
-         validity.notBefore.month = 1;
-         validity.notBefore.day = 1;
-         validity.notBefore.hours = 12;
-         validity.notBefore.minutes = 0;
-         validity.notBefore.seconds = 0;
-         validity.notAfter.year = 2021;
-         validity.notAfter.month = 1;
-         validity.notAfter.day = 1;
-         validity.notAfter.hours = 12;
-         validity.notAfter.minutes = 0;
-         validity.notAfter.seconds = 0;
+         //Retrieve current time
+         currentTime = getCurrentUnixTime();
+
+         //Any real-time clock implemented?
+         if(currentTime != 0)
+         {
+            //The notBefore field is backdated to tolerate a clock skew between
+            //the ACME client and the server
+            convertUnixTimeToDate(currentTime - ACME_CLIENT_MAX_CLOCK_SKEW,
+               &validity.notBefore);
+
+            //Validity period of the self-signed certificate
+            convertUnixTimeToDate(currentTime +
+               ACME_CLIENT_SELF_SIGNED_CERT_VALIDITY, &validity.notAfter);
+         }
+         else
+         {
+            //In the absence of a real-time clock, the certificate has no
+            //well-defined expiration date
+            validity.notBefore.year = 2020;
+            validity.notBefore.month = 1;
+            validity.notBefore.day = 1;
+            validity.notBefore.hours = 0;
+            validity.notBefore.minutes = 0;
+            validity.notBefore.seconds = 0;
+            validity.notAfter.year = 9999;
+            validity.notAfter.month = 12;
+            validity.notAfter.day = 31;
+            validity.notAfter.hours = 23;
+            validity.notAfter.minutes = 59;
+            validity.notAfter.seconds = 59;
+         }
 
          //Create a self-signed certificate
          error = x509CreateCertificate(context->prngAlgo, context->prngContext,
